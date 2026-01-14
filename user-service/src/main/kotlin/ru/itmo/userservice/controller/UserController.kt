@@ -1,6 +1,7 @@
 package ru.itmo.userservice.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -92,7 +93,11 @@ class UserController(
             )
         ]
     )
-    fun getCurrentUser(@RequestHeader("X-User-Id") userId: Long): Mono<ResponseEntity<UserResponse>> {
+    fun getCurrentUser(
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        userId: Long
+    ): Mono<ResponseEntity<UserResponse>> {
         return userService.getCurrentUser(userId)
             .map { ResponseEntity.ok(it) }
     }
@@ -207,7 +212,9 @@ class UserController(
         ]
     )
     fun updateProfile(
-        @RequestHeader("X-User-Id") userId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        userId: Long,
         @Valid @RequestBody request: UpdateProfileRequest
     ): Mono<ResponseEntity<UserResponse>> {
         return userService.updateProfile(userId, request)

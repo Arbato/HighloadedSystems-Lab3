@@ -89,7 +89,9 @@ class ShopController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun createShop(
-        @RequestHeader("X-User-Id") sellerId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        sellerId: Long,
 
         @Valid
         @RequestBody
@@ -118,7 +120,9 @@ class ShopController(
         @Parameter(description = "Shop ID")
         shopId: Long,
 
-        @RequestHeader("X-User-Id") sellerId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        sellerId: Long,
 
         @Valid
         @RequestBody

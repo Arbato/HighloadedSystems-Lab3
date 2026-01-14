@@ -1,6 +1,7 @@
 package ru.itmo.userservice.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
@@ -33,8 +34,12 @@ class AuthController(
     @PostMapping("/roles/assign")
     @Operation(summary = "Assign role to user", description = "Admin only - assigns SELLER or MODERATOR role")
     fun assignRole(
-        @RequestHeader("X-User-Id") adminId: Long,
-        @RequestHeader("X-User-Roles") roles: String,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        adminId: Long,
+        @RequestHeader("X-User-Roles")
+        @Parameter(hidden = true)
+        roles: String,
         @Valid @RequestBody request: AssignRoleRequest
     ): Mono<ResponseEntity<Void>> {
         if (!roles.contains("ADMIN")) {

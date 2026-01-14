@@ -36,7 +36,9 @@ class CartController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun getCart(
-        @RequestHeader("X-User-Id") userId: Long
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        userId: Long
     ): ResponseEntity<OrderResponse> {
         val cart = orderService.getCart(userId)
         return ResponseEntity.ok(cart)
@@ -55,7 +57,9 @@ class CartController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun addToCart(
-        @RequestHeader("X-User-Id") userId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        userId: Long,
 
         @Valid
         @RequestBody
@@ -83,7 +87,9 @@ class CartController(
         @Parameter(description = "Item ID")
         itemId: Long,
 
-        @RequestHeader("X-User-Id") userId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        userId: Long,
 
         @Valid
         @RequestBody
@@ -106,7 +112,9 @@ class CartController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun removeFromCart(
-        @RequestHeader("X-User-Id") userId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        userId: Long,
 
         @PathVariable
         @Min(1, message = "Item ID must be greater than 0")
@@ -130,7 +138,9 @@ class CartController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun clearCart(
-        @RequestHeader("X-User-Id") userId: Long
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        userId: Long
     ): ResponseEntity<Void> {
         orderService.clearCart(userId)
         return ResponseEntity.noContent().build()

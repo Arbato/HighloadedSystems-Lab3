@@ -43,7 +43,9 @@ class ModerationController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     ])
     fun getPendingProducts(
-        @RequestHeader("X-User-Id") moderatorId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        moderatorId: Long,
 
         @RequestParam(defaultValue = "1")
         @Parameter(description = "Page number", example = "1")
@@ -69,7 +71,9 @@ class ModerationController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     ])
     fun getPendingProductById(
-        @RequestHeader("X-User-Id") moderatorId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        moderatorId: Long,
 
         @PathVariable
         @Parameter(description = "Product ID", example = "100")
@@ -93,7 +97,9 @@ class ModerationController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     ])
     fun approveProduct(
-        @RequestHeader("X-User-Id") moderatorId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        moderatorId: Long,
 
         @PathVariable
         @Parameter(description = "Product ID", example = "100")
@@ -116,7 +122,9 @@ class ModerationController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     ])
     fun rejectProduct(
-        @RequestHeader("X-User-Id") moderatorId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        moderatorId: Long,
 
         @PathVariable
         @Parameter(description = "Product ID", example = "100")
@@ -142,7 +150,9 @@ class ModerationController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     ])
     fun bulkModerate(
-        @RequestHeader("X-User-Id") moderatorId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        moderatorId: Long,
 
         @Valid
         @RequestBody
@@ -159,7 +169,9 @@ class ModerationController(
         description = "Retrieve the history of all moderation actions performed by a specific moderator"
     )
     fun getModerationHistory(
-        @RequestHeader("X-User-Id") moderatorId: Long
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        moderatorId: Long
     ): Flux<ru.itmo.market.model.entity.ModerationAction> {
         return moderationService.getModerationHistory(moderatorId)
     }

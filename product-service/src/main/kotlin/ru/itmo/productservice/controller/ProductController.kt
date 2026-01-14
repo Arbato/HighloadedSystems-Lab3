@@ -122,7 +122,9 @@ class ProductController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun createProduct(
-        @RequestHeader("X-User-Id") sellerId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        sellerId: Long,
 
         @Valid
         @RequestBody
@@ -151,7 +153,9 @@ class ProductController(
         @Parameter(description = "Product ID")
         productId: Long,
 
-        @RequestHeader("X-User-Id") userId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        userId: Long,
 
         @Valid
         @RequestBody
@@ -180,7 +184,9 @@ class ProductController(
         @Parameter(description = "Product ID")
         productId: Long,
 
-        @RequestHeader("X-User-Id") userId: Long
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        userId: Long
     ): ResponseEntity<Void> {
         productService.deleteProduct(productId, userId)
         return ResponseEntity.noContent().build()
@@ -252,7 +258,9 @@ class ProductController(
         @Parameter(description = "Product ID")
         id: Long,
 
-        @RequestHeader("X-User-Id") moderatorId: Long
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        moderatorId: Long
     ): ResponseEntity<ProductResponse> {
         val response = productService.approveProduct(id, moderatorId)
         return ResponseEntity.ok(response)
@@ -277,7 +285,9 @@ class ProductController(
         @Parameter(description = "Product ID")
         id: Long,
 
-        @RequestHeader("X-User-Id") moderatorId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        moderatorId: Long,
 
         @RequestParam
         @Parameter(description = "Rejection reason")
