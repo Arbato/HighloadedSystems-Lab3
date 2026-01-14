@@ -76,7 +76,7 @@ class OrderControllerTest {
         whenever(orderService.createOrder(eq(1L), any())).thenReturn(testOrderResponse)
 
         mockMvc.perform(post("/api/orders")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated)
@@ -94,7 +94,7 @@ class OrderControllerTest {
             .thenThrow(BadRequestException("Cannot create order from empty cart"))
 
         mockMvc.perform(post("/api/orders")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest)
@@ -109,7 +109,7 @@ class OrderControllerTest {
             .thenThrow(ResourceNotFoundException("Cart not found"))
 
         mockMvc.perform(post("/api/orders")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound)
@@ -124,7 +124,7 @@ class OrderControllerTest {
             .thenThrow(BadRequestException("Delivery address is required"))
 
         mockMvc.perform(post("/api/orders")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest)
@@ -138,7 +138,7 @@ class OrderControllerTest {
         whenever(orderService.getOrderById(1L, 1L)).thenReturn(testOrderResponse)
 
         mockMvc.perform(get("/api/orders/1")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.userId").value(1))
@@ -152,7 +152,7 @@ class OrderControllerTest {
             .thenThrow(ResourceNotFoundException("Order not found"))
 
         mockMvc.perform(get("/api/orders/999")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isNotFound)
     }
 
@@ -163,7 +163,7 @@ class OrderControllerTest {
             .thenThrow(BadRequestException("Invalid order ID"))
 
         mockMvc.perform(get("/api/orders/0")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isBadRequest)
     }
 
@@ -173,7 +173,7 @@ class OrderControllerTest {
         whenever(orderService.getOrderById(1L, 1L)).thenReturn(testOrderResponse)
 
         mockMvc.perform(get("/api/orders/1")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.items").isArray)
             .andExpect(jsonPath("$.items[0].productName").value("Test Product"))
@@ -196,7 +196,7 @@ class OrderControllerTest {
         whenever(orderService.getUserOrders(1L, 1, 20)).thenReturn(response)
 
         mockMvc.perform(get("/api/orders")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data").isArray)
             .andExpect(jsonPath("$.data[0].id").value(1))
@@ -218,7 +218,7 @@ class OrderControllerTest {
         whenever(orderService.getUserOrders(1L, 2, 10)).thenReturn(response)
 
         mockMvc.perform(get("/api/orders")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .param("page", "2")
             .param("pageSize", "10"))
             .andExpect(status().isOk)
@@ -240,7 +240,7 @@ class OrderControllerTest {
         whenever(orderService.getUserOrders(1L, 1, 20)).thenReturn(response)
 
         mockMvc.perform(get("/api/orders")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data").isEmpty)
             .andExpect(jsonPath("$.totalElements").value(0))
@@ -253,7 +253,7 @@ class OrderControllerTest {
             .thenThrow(BadRequestException("Invalid user ID"))
 
         mockMvc.perform(get("/api/orders")
-            .param("userId", "0"))
+            .header("X-User-Id", "0"))
             .andExpect(status().isBadRequest)
     }
 
@@ -264,7 +264,7 @@ class OrderControllerTest {
             .thenThrow(BadRequestException("Page must be greater than 0"))
 
         mockMvc.perform(get("/api/orders")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .param("page", "0"))
             .andExpect(status().isBadRequest)
     }
@@ -284,7 +284,7 @@ class OrderControllerTest {
         whenever(orderService.getUserOrders(1L, 1, 20)).thenReturn(response)
 
         mockMvc.perform(get("/api/orders")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.data.length()").value(2))
             .andExpect(jsonPath("$.data[0].status").value("PENDING"))

@@ -44,3 +44,8 @@ logging:
   level:
     root: WARN
     ru.itmo.userservice: INFO
+
+app:
+  jwt:
+    secret: test-secret-key-for-jwt-min-32-characters-long
+    expiration: 86400000

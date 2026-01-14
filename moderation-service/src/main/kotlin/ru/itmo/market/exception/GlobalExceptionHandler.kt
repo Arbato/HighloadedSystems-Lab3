@@ -58,6 +58,17 @@ class GlobalExceptionHandler {
             ))
     }
 
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(ErrorResponse(
+                message = ex.message ?: "Bad request",
+                status = HttpStatus.BAD_REQUEST.value(),
+                timestamp = LocalDateTime.now(),
+                path = ""
+            ))
+    }
+
     @ExceptionHandler(ConstraintViolationException::class)
     fun handleConstraintViolationException(
         ex: ConstraintViolationException,

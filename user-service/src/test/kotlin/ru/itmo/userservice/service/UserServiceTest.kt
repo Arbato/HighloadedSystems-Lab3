@@ -81,9 +81,8 @@ class UserServiceTest {
         StepVerifier.create(userService.register(request))
             .assertNext { response ->
                 assert(response.username == "testuser")
-                assert(response.email == "test@example.com")
-                assert(response.firstName == "Test")
-                assert(response.lastName == "User")
+                assert(response.userId > 0)
+                assert(response.token.isNotBlank())
                 assert(response.roles.contains("USER"))
             }
             .expectComplete()
@@ -205,9 +204,9 @@ class UserServiceTest {
 
         val registeredUser = userService.register(registerRequest).block()!!
 
-        StepVerifier.create(userService.getUserById(registeredUser.id))
+        StepVerifier.create(userService.getUserById(registeredUser.userId))
             .assertNext { response ->
-                assert(response.id == registeredUser.id)
+                assert(response.id == registeredUser.userId)
                 assert(response.username == "testuser")
             }
             .expectComplete()
@@ -253,9 +252,9 @@ class UserServiceTest {
 
         val registeredUser = userService.register(registerRequest).block()!!
 
-        StepVerifier.create(userService.getCurrentUser(registeredUser.id))
+        StepVerifier.create(userService.getCurrentUser(registeredUser.userId))
             .assertNext { response ->
-                assert(response.id == registeredUser.id)
+                assert(response.id == registeredUser.userId)
                 assert(response.username == "testuser")
                 assert(response.email == "test@example.com")
             }
@@ -340,7 +339,7 @@ class UserServiceTest {
             lastName = "Name"
         )
 
-        StepVerifier.create(userService.updateProfile(registeredUser.id, updateRequest))
+        StepVerifier.create(userService.updateProfile(registeredUser.userId, updateRequest))
             .assertNext { response ->
                 assert(response.email == "newemail@example.com")
                 assert(response.firstName == "Updated")
@@ -369,7 +368,7 @@ class UserServiceTest {
             lastName = null
         )
 
-        StepVerifier.create(userService.updateProfile(registeredUser.id, updateRequest))
+        StepVerifier.create(userService.updateProfile(registeredUser.userId, updateRequest))
             .assertNext { response ->
                 assert(response.email == "test@example.com")
                 assert(response.firstName == "Updated")
@@ -434,7 +433,7 @@ class UserServiceTest {
             lastName = null
         )
 
-        StepVerifier.create(userService.updateProfile(user2.id, updateRequest))
+        StepVerifier.create(userService.updateProfile(user2.userId, updateRequest))
             .expectError(ConflictException::class.java)
             .verify(Duration.ofSeconds(10))
     }
@@ -454,11 +453,11 @@ class UserServiceTest {
 
         val registeredUser = userService.register(registerRequest).block()!!
 
-        StepVerifier.create(userService.deleteUser(registeredUser.id))
+        StepVerifier.create(userService.deleteUser(registeredUser.userId))
             .expectComplete()
             .verify(Duration.ofSeconds(10))
 
-        StepVerifier.create(userService.getUserById(registeredUser.id))
+        StepVerifier.create(userService.getUserById(registeredUser.userId))
             .expectError(ResourceNotFoundException::class.java)
             .verify(Duration.ofSeconds(10))
     }
@@ -494,7 +493,7 @@ class UserServiceTest {
 
         val registeredUser = userService.register(registerRequest).block()!!
 
-        StepVerifier.create(userService.hasRole(registeredUser.id, UserRole.USER))
+        StepVerifier.create(userService.hasRole(registeredUser.userId, UserRole.USER))
             .assertNext { hasRole ->
                 assert(hasRole)
             }
@@ -515,7 +514,7 @@ class UserServiceTest {
 
         val registeredUser = userService.register(registerRequest).block()!!
 
-        StepVerifier.create(userService.hasRole(registeredUser.id, UserRole.ADMIN))
+        StepVerifier.create(userService.hasRole(registeredUser.userId, UserRole.ADMIN))
             .assertNext { hasRole ->
                 assert(!hasRole)
             }
@@ -544,11 +543,11 @@ class UserServiceTest {
 
         val registeredUser = userService.register(registerRequest).block()!!
 
-        StepVerifier.create(userService.addRole(registeredUser.id, UserRole.ADMIN))
+        StepVerifier.create(userService.addRole(registeredUser.userId, UserRole.ADMIN))
             .expectComplete()
             .verify(Duration.ofSeconds(10))
 
-        StepVerifier.create(userService.hasRole(registeredUser.id, UserRole.ADMIN))
+        StepVerifier.create(userService.hasRole(registeredUser.userId, UserRole.ADMIN))
             .assertNext { hasRole ->
                 assert(hasRole)
             }

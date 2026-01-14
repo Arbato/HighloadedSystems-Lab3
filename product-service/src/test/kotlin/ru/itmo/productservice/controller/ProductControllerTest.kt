@@ -197,7 +197,7 @@ class ProductControllerTest {
         whenever(productService.createProduct(any(), eq(1L))).thenReturn(createdProduct)
 
         mockMvc.perform(post("/api/products")
-            .param("sellerId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated)
@@ -220,7 +220,7 @@ class ProductControllerTest {
             .thenThrow(ResourceNotFoundException("Shop not found"))
 
         mockMvc.perform(post("/api/products")
-            .param("sellerId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound)
@@ -241,7 +241,7 @@ class ProductControllerTest {
             .thenThrow(ForbiddenException("Only shop owner can add products"))
 
         mockMvc.perform(post("/api/products")
-            .param("sellerId", "999")
+            .header("X-User-Id", "999")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isForbidden)
@@ -268,7 +268,7 @@ class ProductControllerTest {
         whenever(productService.updateProduct(eq(1L), eq(2L), any())).thenReturn(updatedProduct)
 
         mockMvc.perform(put("/api/products/1")
-            .param("userId", "2")
+            .header("X-User-Id", "2")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk)
@@ -284,7 +284,7 @@ class ProductControllerTest {
             .thenThrow(ForbiddenException("Only moderators can update products"))
 
         mockMvc.perform(put("/api/products/1")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isForbidden)
@@ -299,7 +299,7 @@ class ProductControllerTest {
             .thenThrow(ResourceNotFoundException("Product not found"))
 
         mockMvc.perform(put("/api/products/999")
-            .param("userId", "2")
+            .header("X-User-Id", "2")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound)
@@ -313,7 +313,7 @@ class ProductControllerTest {
         doNothing().whenever(productService).deleteProduct(1L, 1L)
 
         mockMvc.perform(delete("/api/products/1")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isNoContent)
 
         verify(productService).deleteProduct(1L, 1L)
@@ -326,7 +326,7 @@ class ProductControllerTest {
             .whenever(productService).deleteProduct(999L, 1L)
 
         mockMvc.perform(delete("/api/products/999")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isNotFound)
     }
 
@@ -337,7 +337,7 @@ class ProductControllerTest {
             .whenever(productService).deleteProduct(1L, 999L)
 
         mockMvc.perform(delete("/api/products/1")
-            .param("userId", "999"))
+            .header("X-User-Id", "999"))
             .andExpect(status().isForbidden)
     }
 
@@ -396,7 +396,7 @@ class ProductControllerTest {
         whenever(productService.approveProduct(1L, 2L)).thenReturn(approvedProduct)
 
         mockMvc.perform(post("/api/products/1/approve")
-            .param("moderatorId", "2"))
+            .header("X-User-Id", "2"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("APPROVED"))
     }
@@ -408,7 +408,7 @@ class ProductControllerTest {
             .thenThrow(ForbiddenException("Only moderators can approve"))
 
         mockMvc.perform(post("/api/products/1/approve")
-            .param("moderatorId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isForbidden)
     }
 
@@ -419,7 +419,7 @@ class ProductControllerTest {
             .thenThrow(ResourceNotFoundException("Product not found"))
 
         mockMvc.perform(post("/api/products/999/approve")
-            .param("moderatorId", "2"))
+            .header("X-User-Id", "2"))
             .andExpect(status().isNotFound)
     }
 
@@ -437,7 +437,7 @@ class ProductControllerTest {
             .thenReturn(rejectedProduct)
 
         mockMvc.perform(post("/api/products/1/reject")
-            .param("moderatorId", "2")
+            .header("X-User-Id", "2")
             .param("reason", "Inappropriate content"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("REJECTED"))
@@ -451,7 +451,7 @@ class ProductControllerTest {
             .thenThrow(ForbiddenException("Only moderators can reject"))
 
         mockMvc.perform(post("/api/products/1/reject")
-            .param("moderatorId", "1")
+            .header("X-User-Id", "1")
             .param("reason", "Reason"))
             .andExpect(status().isForbidden)
     }
@@ -463,7 +463,7 @@ class ProductControllerTest {
             .thenThrow(BadRequestException("Rejection reason cannot be empty"))
 
         mockMvc.perform(post("/api/products/1/reject")
-            .param("moderatorId", "2")
+            .header("X-User-Id", "2")
             .param("reason", ""))
             .andExpect(status().isBadRequest)
     }

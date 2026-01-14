@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.server.ServerWebExchange
 import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.bind.support.WebExchangeBindException
 import reactor.core.publisher.Mono
 import java.time.LocalDateTime
 import ru.itmo.userservice.model.dto.response.ErrorResponse
@@ -31,6 +32,17 @@ class GlobalExceptionHandler {
             .body(ErrorResponse(
                 message = ex.message ?: "Bad request",
                 status = HttpStatus.BAD_REQUEST.value(),
+                timestamp = LocalDateTime.now(),
+                path = ""
+            ))
+    }
+
+    @ExceptionHandler(ConflictException::class)
+    fun handleConflictException(ex: ConflictException): ResponseEntity<ErrorResponse> {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(ErrorResponse(
+                message = ex.message ?: "Conflict",
+                status = HttpStatus.CONFLICT.value(),
                 timestamp = LocalDateTime.now(),
                 path = ""
             ))
@@ -74,7 +86,27 @@ class GlobalExceptionHandler {
     ): Mono<ResponseEntity<ErrorResponse>> {
         val errors = ex.bindingResult.fieldErrors
             .map { "${it.field}: ${it.defaultMessage}" }
-        
+
+        return Mono.just(
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse(
+                    message = "Validation failed",
+                    status = HttpStatus.BAD_REQUEST.value(),
+                    timestamp = LocalDateTime.now(),
+                    path = exchange.request.path.value(),
+                    errors = errors
+                ))
+        )
+    }
+
+    @ExceptionHandler(WebExchangeBindException::class)
+    fun handleWebExchangeBindException(
+        ex: WebExchangeBindException,
+        exchange: ServerWebExchange
+    ): Mono<ResponseEntity<ErrorResponse>> {
+        val errors = ex.bindingResult.fieldErrors
+            .map { "${it.field}: ${it.defaultMessage}" }
+
         return Mono.just(
             ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse(

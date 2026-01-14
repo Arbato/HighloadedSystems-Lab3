@@ -74,7 +74,7 @@ class CartControllerTest {
         whenever(orderService.getCart(1L)).thenReturn(testOrderResponse)
 
         mockMvc.perform(get("/api/cart")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.id").value(1))
             .andExpect(jsonPath("$.userId").value(1))
@@ -90,7 +90,7 @@ class CartControllerTest {
             .thenThrow(BadRequestException("Invalid user ID"))
 
         mockMvc.perform(get("/api/cart")
-            .param("userId", "0"))
+            .header("X-User-Id", "0"))
             .andExpect(status().isBadRequest)
     }
 
@@ -101,7 +101,7 @@ class CartControllerTest {
         whenever(orderService.getCart(1L)).thenReturn(emptyCart)
 
         mockMvc.perform(get("/api/cart")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.items").isEmpty)
             .andExpect(jsonPath("$.totalPrice").value(0))
@@ -117,7 +117,7 @@ class CartControllerTest {
         whenever(orderService.addToCart(1L, 1L, 2)).thenReturn(testOrderResponse)
 
         mockMvc.perform(post("/api/cart/items")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk)
@@ -133,7 +133,7 @@ class CartControllerTest {
             .thenThrow(ResourceNotFoundException("Product not found"))
 
         mockMvc.perform(post("/api/cart/items")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound)
@@ -148,7 +148,7 @@ class CartControllerTest {
             .thenThrow(BadRequestException("Quantity must be at least 1"))
 
         mockMvc.perform(post("/api/cart/items")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest)
@@ -167,7 +167,7 @@ class CartControllerTest {
         whenever(orderService.updateCartItemQuantity(1L, 1L, 5)).thenReturn(updatedResponse)
 
         mockMvc.perform(put("/api/cart/items/1")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk)
@@ -183,7 +183,7 @@ class CartControllerTest {
             .thenThrow(ResourceNotFoundException("Item not found"))
 
         mockMvc.perform(put("/api/cart/items/999")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound)
@@ -198,7 +198,7 @@ class CartControllerTest {
             .thenThrow(BadRequestException("Item does not belong to user's cart"))
 
         mockMvc.perform(put("/api/cart/items/1")
-            .param("userId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest)
@@ -214,7 +214,7 @@ class CartControllerTest {
         whenever(orderService.removeFromCart(1L, 1L)).thenReturn(emptyCart)
 
         mockMvc.perform(delete("/api/cart/items/1")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.items").isEmpty)
     }
@@ -226,7 +226,7 @@ class CartControllerTest {
             .thenThrow(ResourceNotFoundException("Item not found"))
 
         mockMvc.perform(delete("/api/cart/items/999")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isNotFound)
     }
 
@@ -237,7 +237,7 @@ class CartControllerTest {
             .thenThrow(ResourceNotFoundException("Cart not found"))
 
         mockMvc.perform(delete("/api/cart/items/1")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isNotFound)
     }
 
@@ -249,7 +249,7 @@ class CartControllerTest {
         doNothing().whenever(orderService).clearCart(1L)
 
         mockMvc.perform(delete("/api/cart")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isNoContent)
 
         verify(orderService).clearCart(1L)
@@ -262,7 +262,7 @@ class CartControllerTest {
             .whenever(orderService).clearCart(1L)
 
         mockMvc.perform(delete("/api/cart")
-            .param("userId", "1"))
+            .header("X-User-Id", "1"))
             .andExpect(status().isNotFound)
     }
 
@@ -273,7 +273,7 @@ class CartControllerTest {
             .whenever(orderService).clearCart(0L)
 
         mockMvc.perform(delete("/api/cart")
-            .param("userId", "0"))
+            .header("X-User-Id", "0"))
             .andExpect(status().isBadRequest)
     }
 }

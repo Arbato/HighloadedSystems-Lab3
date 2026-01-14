@@ -192,7 +192,7 @@ class ShopControllerTest {
         whenever(shopService.createShop(eq(1L), any())).thenReturn(createdShop)
 
         mockMvc.perform(post("/api/shops")
-            .param("sellerId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated)
@@ -213,7 +213,7 @@ class ShopControllerTest {
             .thenThrow(BadRequestException("Seller already has a shop"))
 
         mockMvc.perform(post("/api/shops")
-            .param("sellerId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest)
@@ -239,7 +239,7 @@ class ShopControllerTest {
         whenever(shopService.createShop(eq(1L), any())).thenReturn(createdShop)
 
         mockMvc.perform(post("/api/shops")
-            .param("sellerId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated)
@@ -265,7 +265,7 @@ class ShopControllerTest {
         whenever(shopService.updateShop(eq(1L), eq(1L), any())).thenReturn(updatedShop)
 
         mockMvc.perform(put("/api/shops/1")
-            .param("sellerId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk)
@@ -281,7 +281,7 @@ class ShopControllerTest {
             .thenThrow(ResourceNotFoundException("Shop not found"))
 
         mockMvc.perform(put("/api/shops/999")
-            .param("sellerId", "1")
+            .header("X-User-Id", "1")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound)
@@ -296,7 +296,7 @@ class ShopControllerTest {
             .thenThrow(ForbiddenException("Only shop owner can update"))
 
         mockMvc.perform(put("/api/shops/1")
-            .param("sellerId", "999")
+            .header("X-User-Id", "999")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isForbidden)

@@ -17,7 +17,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.containers.PostgreSQLContainer
 import ru.itmo.userservice.model.dto.request.RegisterRequest
 import ru.itmo.userservice.model.dto.request.UpdateProfileRequest
-import ru.itmo.userservice.model.dto.response.UserResponse
+import ru.itmo.userservice.model.dto.response.AuthResponse
 import ru.itmo.userservice.repository.UserRepository
 import ru.itmo.userservice.repository.UserRoleRepository
 import ru.itmo.userservice.service.UserService
@@ -75,7 +75,7 @@ class UserControllerTest {
     private fun createTestUser(
         username: String = "testuser",
         email: String = "test@example.com"
-    ): UserResponse {
+    ): AuthResponse {
         val request = RegisterRequest(
             username = username,
             email = email,
@@ -107,9 +107,8 @@ class UserControllerTest {
             .expectStatus().isCreated
             .expectBody()
             .jsonPath("$.username").isEqualTo("testuser")
-            .jsonPath("$.email").isEqualTo("test@example.com")
-            .jsonPath("$.firstName").isEqualTo("Test")
-            .jsonPath("$.lastName").isEqualTo("User")
+            .jsonPath("$.userId").isNotEmpty
+            .jsonPath("$.token").isNotEmpty
             .jsonPath("$.roles").isArray
     }
 
@@ -196,11 +195,11 @@ class UserControllerTest {
         val user = createTestUser()
 
         webTestClient.get()
-            .uri("/api/users/${user.id}")
+            .uri("/api/users/${user.userId}")
             .exchange()
             .expectStatus().isOk
             .expectBody()
-            .jsonPath("$.id").isEqualTo(user.id)
+            .jsonPath("$.id").isEqualTo(user.userId)
             .jsonPath("$.username").isEqualTo("testuser")
             .jsonPath("$.email").isEqualTo("test@example.com")
     }
@@ -231,11 +230,12 @@ class UserControllerTest {
         val user = createTestUser()
 
         webTestClient.get()
-            .uri("/api/users/me?userId=${user.id}")
+            .uri("/api/users/me")
+            .header("X-User-Id", user.userId.toString())
             .exchange()
             .expectStatus().isOk
             .expectBody()
-            .jsonPath("$.id").isEqualTo(user.id)
+            .jsonPath("$.id").isEqualTo(user.userId)
             .jsonPath("$.username").isEqualTo("testuser")
     }
 
@@ -243,7 +243,8 @@ class UserControllerTest {
     @DisplayName("GET /api/users/me - Should return 404 for non-existent user")
     fun testGetCurrentUserNotFound() {
         webTestClient.get()
-            .uri("/api/users/me?userId=999")
+            .uri("/api/users/me")
+            .header("X-User-Id", "999")
             .exchange()
             .expectStatus().isNotFound
     }
@@ -252,7 +253,8 @@ class UserControllerTest {
     @DisplayName("GET /api/users/me - Should return 400 for invalid user ID")
     fun testGetCurrentUserInvalidId() {
         webTestClient.get()
-            .uri("/api/users/me?userId=-1")
+            .uri("/api/users/me")
+            .header("X-User-Id", "-1")
             .exchange()
             .expectStatus().isBadRequest
     }
@@ -296,7 +298,8 @@ class UserControllerTest {
         )
 
         webTestClient.put()
-            .uri("/api/users/me?userId=${user.id}")
+            .uri("/api/users/me")
+            .header("X-User-Id", user.userId.toString())
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(updateRequest)
             .exchange()
@@ -319,7 +322,8 @@ class UserControllerTest {
         )
 
         webTestClient.put()
-            .uri("/api/users/me?userId=${user.id}")
+            .uri("/api/users/me")
+            .header("X-User-Id", user.userId.toString())
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(updateRequest)
             .exchange()
@@ -340,7 +344,8 @@ class UserControllerTest {
         )
 
         webTestClient.put()
-            .uri("/api/users/me?userId=999")
+            .uri("/api/users/me")
+            .header("X-User-Id", "999")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(updateRequest)
             .exchange()
@@ -357,7 +362,8 @@ class UserControllerTest {
         )
 
         webTestClient.put()
-            .uri("/api/users/me?userId=-1")
+            .uri("/api/users/me")
+            .header("X-User-Id", "-1")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(updateRequest)
             .exchange()
@@ -377,7 +383,8 @@ class UserControllerTest {
         )
 
         webTestClient.put()
-            .uri("/api/users/me?userId=${user2.id}")
+            .uri("/api/users/me")
+            .header("X-User-Id", user2.userId.toString())
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(updateRequest)
             .exchange()
@@ -392,12 +399,12 @@ class UserControllerTest {
         val user = createTestUser()
 
         webTestClient.delete()
-            .uri("/api/users/${user.id}")
+            .uri("/api/users/${user.userId}")
             .exchange()
             .expectStatus().isNoContent
 
         webTestClient.get()
-            .uri("/api/users/${user.id}")
+            .uri("/api/users/${user.userId}")
             .exchange()
             .expectStatus().isNotFound
     }

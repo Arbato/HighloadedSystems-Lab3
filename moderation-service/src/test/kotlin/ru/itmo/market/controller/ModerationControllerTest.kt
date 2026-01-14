@@ -159,7 +159,7 @@ class ModerationControllerTest {
 
         StepVerifier.create(controller.approveProduct(1L, 100L))
             .assertNext { response ->
-                assert(response.statusCode == HttpStatus.CREATED)
+                assert(response.statusCode == HttpStatus.OK)
                 assert(response.body?.action == "APPROVE")
                 assert(response.body?.newStatus == "APPROVED")
             }
@@ -190,7 +190,7 @@ class ModerationControllerTest {
 
         StepVerifier.create(controller.rejectProduct(1L, 100L, request))
             .assertNext { response ->
-                assert(response.statusCode == HttpStatus.CREATED)
+                assert(response.statusCode == HttpStatus.OK)
                 assert(response.body?.action == "REJECT")
                 assert(response.body?.reason == "Low quality")
             }
