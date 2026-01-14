@@ -178,7 +178,7 @@ class SwaggerAggregatorController {
 
         result.set<ObjectNode>("paths", allPaths)
         result.set<ObjectNode>("components", allComponents)
-        
+
         if (allTags.size() > 0) {
             result.set<ArrayNode>("tags", allTags)
         }
@@ -189,6 +189,27 @@ class SwaggerAggregatorController {
         serverNode.put("description", "Local gateway")
         serversArray.add(serverNode)
         result.set<ArrayNode>("servers", serversArray)
+
+        // Add JWT Bearer security scheme
+        val securitySchemesNode = allComponents.get("securitySchemes")
+            ?.let { it as ObjectNode }
+            ?: objectMapper.createObjectNode()
+
+        val bearerScheme = objectMapper.createObjectNode()
+        bearerScheme.put("type", "http")
+        bearerScheme.put("scheme", "bearer")
+        bearerScheme.put("bearerFormat", "JWT")
+        bearerScheme.put("description", "Enter your JWT token")
+        securitySchemesNode.set<ObjectNode>("bearerAuth", bearerScheme)
+        allComponents.set<ObjectNode>("securitySchemes", securitySchemesNode)
+
+        // Add global security requirement
+        val securityArray = objectMapper.createArrayNode()
+        val securityRequirement = objectMapper.createObjectNode()
+        val bearerAuthArray = objectMapper.createArrayNode()
+        securityRequirement.set<ArrayNode>("bearerAuth", bearerAuthArray)
+        securityArray.add(securityRequirement)
+        result.set<ArrayNode>("security", securityArray)
 
         return result
     }

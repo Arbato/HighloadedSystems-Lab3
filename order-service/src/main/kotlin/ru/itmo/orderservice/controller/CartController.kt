@@ -36,10 +36,7 @@ class CartController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun getCart(
-        @RequestParam
-        @Min(1, message = "User ID must be greater than 0")
-        @Parameter(description = "User ID", example = "1")
-        userId: Long
+        @RequestHeader("X-User-Id") userId: Long
     ): ResponseEntity<OrderResponse> {
         val cart = orderService.getCart(userId)
         return ResponseEntity.ok(cart)
@@ -58,11 +55,8 @@ class CartController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun addToCart(
-        @RequestParam
-        @Min(1, message = "User ID must be greater than 0")
-        @Parameter(description = "User ID", example = "1")
-        userId: Long,
-        
+        @RequestHeader("X-User-Id") userId: Long,
+
         @Valid
         @RequestBody
         request: AddToCartRequest
@@ -88,12 +82,9 @@ class CartController(
         @Min(1, message = "Item ID must be greater than 0")
         @Parameter(description = "Item ID")
         itemId: Long,
-        
-        @RequestParam
-        @Min(1, message = "User ID must be greater than 0")
-        @Parameter(description = "User ID")
-        userId: Long,
-        
+
+        @RequestHeader("X-User-Id") userId: Long,
+
         @Valid
         @RequestBody
         request: UpdateQuantityRequest
@@ -115,11 +106,8 @@ class CartController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun removeFromCart(
-        @RequestParam
-        @Min(1, message = "User ID must be greater than 0")
-        @Parameter(description = "User ID")
-        userId: Long,
-        
+        @RequestHeader("X-User-Id") userId: Long,
+
         @PathVariable
         @Min(1, message = "Item ID must be greater than 0")
         @Parameter(description = "Item ID")
@@ -128,7 +116,7 @@ class CartController(
         val cart = orderService.removeFromCart(userId, itemId)
         return ResponseEntity.ok(cart)
     }
-    
+
     /**
      * DELETE /api/cart
      * Очистить корзину
@@ -142,10 +130,7 @@ class CartController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun clearCart(
-        @RequestParam
-        @Min(1, message = "User ID must be greater than 0")
-        @Parameter(description = "User ID")
-        userId: Long
+        @RequestHeader("X-User-Id") userId: Long
     ): ResponseEntity<Void> {
         orderService.clearCart(userId)
         return ResponseEntity.noContent().build()

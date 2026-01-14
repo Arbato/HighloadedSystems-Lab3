@@ -115,7 +115,7 @@ springdoc:
 management:
   endpoint:
     gateway:
-      enabled: true
+      access: unrestricted
   endpoints:
     web:
       exposure:
@@ -134,3 +134,7 @@ eureka:
       defaultZone: http://${EUREKA_HOST:eureka}:${EUREKA_PORT:8761}/eureka
     register-with-eureka: true
     fetch-registry: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:your-secret-key-min-32-chars-long-here}

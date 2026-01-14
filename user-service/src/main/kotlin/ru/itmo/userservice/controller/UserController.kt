@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
 import ru.itmo.userservice.model.dto.request.RegisterRequest
 import ru.itmo.userservice.model.dto.request.UpdateProfileRequest
+import ru.itmo.userservice.model.dto.response.AuthResponse
 import ru.itmo.userservice.model.dto.response.UserResponse
 import ru.itmo.userservice.model.dto.response.ErrorResponse
 import ru.itmo.userservice.service.UserService
@@ -38,28 +39,28 @@ class UserController(
     @PostMapping("/register")
     @Operation(
         summary = "Register new user",
-        description = "Creates a new user with USER role by default",
+        description = "Creates a new user with USER role by default and returns JWT token",
         responses = [
             ApiResponse(
                 responseCode = "201",
                 description = "User registered successfully",
-                content = [Content(schema = Schema(implementation = UserResponse::class))]
+                content = [Content(schema = Schema(implementation = AuthResponse::class))]
             ),
             ApiResponse(responseCode = "400", description = "Invalid input"),
             ApiResponse(responseCode = "409", description = "Username or email already exists"),
             ApiResponse(responseCode = "500", description = "Internal server error")
         ]
     )
-    fun register(@Valid @RequestBody request: RegisterRequest): Mono<ResponseEntity<UserResponse>> {
+    fun register(@Valid @RequestBody request: RegisterRequest): Mono<ResponseEntity<AuthResponse>> {
         return userService.register(request)
             .map { ResponseEntity.status(HttpStatus.CREATED).body(it) }
     }
     
     /**
      * Получить информацию о текущем пользователе
-     * GET /api/users/me?userId={userId}
-     * 
-     * @param userId ID пользователя из query параметра
+     * GET /api/users/me
+     *
+     * @param userId ID пользователя из заголовка X-User-Id
      * @return 200 OK с UserResponse
      * @throws BadRequestException если userId некорректный
      * @throws ResourceNotFoundException если пользователь не найден
@@ -75,23 +76,23 @@ class UserController(
                 content = [Content(schema = Schema(implementation = UserResponse::class))]
             ),
             ApiResponse(
-                responseCode = "400", 
+                responseCode = "400",
                 description = "Invalid userId",
                 content = [Content(schema = Schema(implementation = ErrorResponse::class))]
             ),
             ApiResponse(
-                responseCode = "404", 
+                responseCode = "404",
                 description = "User not found",
                 content = [Content(schema = Schema(implementation = ErrorResponse::class))]
             ),
             ApiResponse(
-                responseCode = "500", 
+                responseCode = "500",
                 description = "Internal server error",
                 content = [Content(schema = Schema(implementation = ErrorResponse::class))]
             )
         ]
     )
-    fun getCurrentUser(@RequestParam("userId") userId: Long): Mono<ResponseEntity<UserResponse>> {
+    fun getCurrentUser(@RequestHeader("X-User-Id") userId: Long): Mono<ResponseEntity<UserResponse>> {
         return userService.getCurrentUser(userId)
             .map { ResponseEntity.ok(it) }
     }
@@ -180,9 +181,9 @@ class UserController(
     
     /**
      * Обновить профиль пользователя
-     * PUT /api/users/me?userId={userId}
-     * 
-     * @param userId ID пользователя из query параметра
+     * PUT /api/users/me
+     *
+     * @param userId ID пользователя из заголовка X-User-Id
      * @param request UpdateProfileRequest с опциональными email, firstName, lastName
      * @return 200 OK с обновленным UserResponse
      * @throws BadRequestException если userId некорректный или некорректные данные
@@ -206,7 +207,7 @@ class UserController(
         ]
     )
     fun updateProfile(
-        @RequestParam("userId") userId: Long,
+        @RequestHeader("X-User-Id") userId: Long,
         @Valid @RequestBody request: UpdateProfileRequest
     ): Mono<ResponseEntity<UserResponse>> {
         return userService.updateProfile(userId, request)

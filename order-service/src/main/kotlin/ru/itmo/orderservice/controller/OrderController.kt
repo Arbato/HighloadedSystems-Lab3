@@ -37,11 +37,8 @@ class OrderController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun createOrder(
-        @RequestParam
-        @Min(1, message = "User ID must be greater than 0")
-        @Parameter(description = "User ID", example = "1")
-        userId: Long,
-        
+        @RequestHeader("X-User-Id") userId: Long,
+
         @Valid
         @RequestBody
         request: CreateOrderRequest
@@ -67,11 +64,8 @@ class OrderController(
         @Min(1, message = "Order ID must be greater than 0")
         @Parameter(description = "Order ID")
         orderId: Long,
-        
-        @RequestParam
-        @Min(1, message = "User ID must be greater than 0")
-        @Parameter(description = "User ID")
-        userId: Long
+
+        @RequestHeader("X-User-Id") userId: Long
     ): ResponseEntity<OrderResponse> {
         val order = orderService.getOrderById(orderId, userId)
         return ResponseEntity.ok(order)
@@ -89,16 +83,13 @@ class OrderController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun getUserOrders(
-        @RequestParam
-        @Min(1, message = "User ID must be greater than 0")
-        @Parameter(description = "User ID")
-        userId: Long,
-        
+        @RequestHeader("X-User-Id") userId: Long,
+
         @RequestParam(defaultValue = "1")
         @Min(1, message = "Page must be greater than 0")
         @Parameter(description = "Page number")
         page: Int,
-        
+
         @RequestParam(defaultValue = "20")
         @Min(1, message = "PageSize must be greater than 0")
         @Parameter(description = "Items per page")

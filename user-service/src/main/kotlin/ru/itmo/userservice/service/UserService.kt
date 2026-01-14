@@ -1,14 +1,16 @@
 package ru.itmo.userservice.service
 
+import org.springframework.context.annotation.Lazy
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import reactor.core.publisher.Mono
-import reactor.core.scheduler.Schedulers
 import ru.itmo.userservice.exception.BadRequestException
 import ru.itmo.userservice.exception.ConflictException
 import ru.itmo.userservice.exception.ResourceNotFoundException
 import ru.itmo.userservice.model.dto.request.RegisterRequest
 import ru.itmo.userservice.model.dto.request.UpdateProfileRequest
+import ru.itmo.userservice.model.dto.response.AuthResponse
 import ru.itmo.userservice.model.dto.response.UserResponse
 import ru.itmo.userservice.model.entity.User
 import ru.itmo.userservice.model.entity.UserRoleEntity
@@ -16,14 +18,14 @@ import ru.itmo.userservice.model.enums.UserRole
 import ru.itmo.userservice.repository.UserRepository
 import ru.itmo.userservice.repository.UserRoleRepository
 import java.time.LocalDateTime
-import java.security.MessageDigest
-import java.util.Base64
 
 @Service
 class UserService(
     private val userRepository: UserRepository,
-    private val userRoleRepository: UserRoleRepository
+    private val userRoleRepository: UserRoleRepository,
+    @Lazy private val jwtService: JwtService
 ) {
+    private val passwordEncoder = BCryptPasswordEncoder()
     
     /**
      * Регистрация нового пользователя
@@ -31,17 +33,15 @@ class UserService(
      * THROWS: BadRequestException если валидация не прошла
      */
     @Transactional
-    fun register(request: RegisterRequest): Mono<UserResponse> {
-        // Валидация пустых значений
+    fun register(request: RegisterRequest): Mono<AuthResponse> {
         if (request.username.isBlank() || request.email.isBlank()) {
             return Mono.error(BadRequestException("Username and email cannot be empty"))
         }
-        
+
         if (request.password.length < 8) {
             return Mono.error(BadRequestException("Password must be at least 8 characters"))
         }
-        
-        // Проверка на конфликт username
+
         return userRepository.existsByUsername(request.username)
             .flatMap { exists ->
                 if (exists) {
@@ -51,7 +51,6 @@ class UserService(
                 }
             }
             .flatMap {
-                // Проверка на конфликт email
                 userRepository.existsByEmail(request.email)
             }
             .flatMap { exists ->
@@ -62,9 +61,8 @@ class UserService(
                 }
             }
             .flatMap {
-                // Хешируем пароль (BCRYPT подобный процесс - для демо используем простой хеш)
-                val hashedPassword = hashPassword(request.password)
-                
+                val hashedPassword = passwordEncoder.encode(request.password)
+
                 val user = User(
                     username = request.username,
                     email = request.email,
@@ -74,34 +72,34 @@ class UserService(
                     createdAt = LocalDateTime.now(),
                     updatedAt = LocalDateTime.now()
                 )
-                
+
                 userRepository.save(user)
             }
             .flatMap { savedUser ->
-                // Сохраняем роль USER по умолчанию
                 val defaultRole = UserRoleEntity(
                     userId = savedUser.id!!,
                     role = UserRole.USER.name
                 )
-                
+
                 userRoleRepository.save(defaultRole)
                     .then(Mono.just(savedUser))
             }
             .flatMap { user ->
-                getRolesByUserId(user.id!!)
-                    .map { user to it }
-            }
-            .map { (user, roles) ->
-                UserResponse(
-                    id = user.id!!,
-                    username = user.username,
-                    email = user.email,
-                    firstName = user.firstName,
-                    lastName = user.lastName,
-                    roles = roles.toSet(),
-                    createdAt = user.createdAt!!,
-                    updatedAt = user.updatedAt!!
-                )
+                val userId = user.id!!
+                getRolesByUserId(userId)
+                    .map { roles ->
+                        val token = jwtService.generateToken(
+                            userId = userId,
+                            username = user.username,
+                            roles = roles.toSet()
+                        )
+                        AuthResponse(
+                            token = token,
+                            userId = userId,
+                            username = user.username,
+                            roles = roles.toSet()
+                        )
+                    }
             }
             .onErrorMap { throwable ->
                 when (throwable) {
@@ -322,17 +320,7 @@ class UserService(
             .collectList()
             .defaultIfEmpty(listOf(UserRole.USER.name))
     }
-    
-    /**
-     * Хеширование пароля
-     * ПРИМЕЧАНИЕ: В продакшене нужно использовать BCryptPasswordEncoder
-     */
-    private fun hashPassword(password: String): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val hash = digest.digest(password.toByteArray())
-        return Base64.getEncoder().encodeToString(hash)
-    }
-    
+
     /**
      * Валидация email
      */

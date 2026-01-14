@@ -36,6 +36,17 @@ class GlobalExceptionHandler {
             ))
     }
 
+    @ExceptionHandler(ForbiddenException::class)
+    fun handleForbiddenException(ex: ForbiddenException): ResponseEntity<ErrorResponse> {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(ErrorResponse(
+                message = ex.message ?: "Access denied",
+                status = HttpStatus.FORBIDDEN.value(),
+                timestamp = LocalDateTime.now(),
+                path = ""
+            ))
+    }
+
     @ExceptionHandler(ConstraintViolationException::class)
     fun handleConstraintViolationException(
         ex: ConstraintViolationException,

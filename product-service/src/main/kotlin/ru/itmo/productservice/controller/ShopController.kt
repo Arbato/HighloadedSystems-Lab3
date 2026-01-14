@@ -89,11 +89,8 @@ class ShopController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun createShop(
-        @RequestParam
-        @Min(1, message = "Seller ID must be greater than 0")
-        @Parameter(description = "Seller ID", example = "1")
-        sellerId: Long,
-        
+        @RequestHeader("X-User-Id") sellerId: Long,
+
         @Valid
         @RequestBody
         request: CreateShopRequest
@@ -120,12 +117,9 @@ class ShopController(
         @Min(1, message = "Shop ID must be greater than 0")
         @Parameter(description = "Shop ID")
         shopId: Long,
-        
-        @RequestParam
-        @Min(1, message = "Seller ID must be greater than 0")
-        @Parameter(description = "Seller ID (shop owner)")
-        sellerId: Long,
-        
+
+        @RequestHeader("X-User-Id") sellerId: Long,
+
         @Valid
         @RequestBody
         request: UpdateShopRequest

@@ -122,11 +122,8 @@ class ProductController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     )
     fun createProduct(
-        @RequestParam
-        @Min(1, message = "Seller ID must be greater than 0")
-        @Parameter(description = "Seller ID", example = "1")
-        sellerId: Long,
-        
+        @RequestHeader("X-User-Id") sellerId: Long,
+
         @Valid
         @RequestBody
         request: CreateProductRequest
@@ -153,12 +150,9 @@ class ProductController(
         @Min(1, message = "Product ID must be greater than 0")
         @Parameter(description = "Product ID")
         productId: Long,
-        
-        @RequestParam
-        @Min(1, message = "User ID must be greater than 0")
-        @Parameter(description = "User ID (moderator)")
-        userId: Long,
-        
+
+        @RequestHeader("X-User-Id") userId: Long,
+
         @Valid
         @RequestBody
         request: UpdateProductRequest
@@ -185,11 +179,8 @@ class ProductController(
         @Min(1, message = "Product ID must be greater than 0")
         @Parameter(description = "Product ID")
         productId: Long,
-        
-        @RequestParam
-        @Min(1, message = "User ID must be greater than 0")
-        @Parameter(description = "User ID")
-        userId: Long
+
+        @RequestHeader("X-User-Id") userId: Long
     ): ResponseEntity<Void> {
         productService.deleteProduct(productId, userId)
         return ResponseEntity.noContent().build()
@@ -260,11 +251,8 @@ class ProductController(
         @Min(1, message = "Product ID must be greater than 0")
         @Parameter(description = "Product ID")
         id: Long,
-        
-        @RequestParam
-        @Min(1, message = "Moderator ID must be greater than 0")
-        @Parameter(description = "Moderator ID")
-        moderatorId: Long
+
+        @RequestHeader("X-User-Id") moderatorId: Long
     ): ResponseEntity<ProductResponse> {
         val response = productService.approveProduct(id, moderatorId)
         return ResponseEntity.ok(response)
@@ -288,12 +276,9 @@ class ProductController(
         @Min(1, message = "Product ID must be greater than 0")
         @Parameter(description = "Product ID")
         id: Long,
-        
-        @RequestParam
-        @Min(1, message = "Moderator ID must be greater than 0")
-        @Parameter(description = "Moderator ID")
-        moderatorId: Long,
-        
+
+        @RequestHeader("X-User-Id") moderatorId: Long,
+
         @RequestParam
         @Parameter(description = "Rejection reason")
         reason: String

@@ -43,15 +43,12 @@ class ModerationController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     ])
     fun getPendingProducts(
-        @RequestParam
-        @Parameter(description = "Moderator ID", example = "1")
-        @Min(1, message = "moderatorId должен быть > 0")
-        moderatorId: Long,
-        
+        @RequestHeader("X-User-Id") moderatorId: Long,
+
         @RequestParam(defaultValue = "1")
         @Parameter(description = "Page number", example = "1")
         page: Int,
-        
+
         @RequestParam(defaultValue = "20")
         @Parameter(description = "Page size", example = "20")
         pageSize: Int
@@ -72,10 +69,8 @@ class ModerationController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     ])
     fun getPendingProductById(
-        @RequestParam
-        @Parameter(description = "Moderator ID", example = "1")
-        moderatorId: Long,
-        
+        @RequestHeader("X-User-Id") moderatorId: Long,
+
         @PathVariable
         @Parameter(description = "Product ID", example = "100")
         id: Long
@@ -98,10 +93,8 @@ class ModerationController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     ])
     fun approveProduct(
-        @RequestParam
-        @Parameter(description = "Moderator ID", example = "1")
-        moderatorId: Long,
-        
+        @RequestHeader("X-User-Id") moderatorId: Long,
+
         @PathVariable
         @Parameter(description = "Product ID", example = "100")
         id: Long
@@ -123,14 +116,12 @@ class ModerationController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     ])
     fun rejectProduct(
-        @RequestParam
-        @Parameter(description = "Moderator ID", example = "1")
-        moderatorId: Long,
-        
+        @RequestHeader("X-User-Id") moderatorId: Long,
+
         @PathVariable
         @Parameter(description = "Product ID", example = "100")
         id: Long,
-        
+
         @Valid
         @RequestBody
         request: RejectProductRequest
@@ -151,28 +142,24 @@ class ModerationController(
         ApiResponse(responseCode = "500", description = "Internal server error")
     ])
     fun bulkModerate(
-        @RequestParam
-        @Parameter(description = "Moderator ID", example = "1")
-        moderatorId: Long,
-        
+        @RequestHeader("X-User-Id") moderatorId: Long,
+
         @Valid
         @RequestBody
         request: BulkModerationRequest
     ): Flux<ModerationResultResponse> {
         return moderationService.bulkModerate(moderatorId, request)
     }
-    
+
     // ========== ИСТОРИЯ ==========
-    
+
     @GetMapping("/history")
     @Operation(
         summary = "Get moderation history",
         description = "Retrieve the history of all moderation actions performed by a specific moderator"
     )
     fun getModerationHistory(
-        @RequestParam
-        @Parameter(description = "Moderator ID", example = "1")
-        moderatorId: Long
+        @RequestHeader("X-User-Id") moderatorId: Long
     ): Flux<ru.itmo.market.model.entity.ModerationAction> {
         return moderationService.getModerationHistory(moderatorId)
     }

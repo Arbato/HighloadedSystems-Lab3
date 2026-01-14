@@ -53,6 +53,14 @@ dependencies {
     
     // OpenAPI / Swagger
     implementation("org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.14")
+
+    // JWT Support
+    implementation("io.jsonwebtoken:jjwt-api:0.12.3")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.3")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.3")
+
+    // BCrypt for password hashing
+    implementation("org.springframework.security:spring-security-crypto:6.2.1")
     
     // Dev tools
     developmentOnly("org.springframework.boot:spring-boot-devtools")
