@@ -85,6 +85,7 @@ class ShopController(
     @ApiResponses(
         ApiResponse(responseCode = "201", description = "Shop created"),
         ApiResponse(responseCode = "400", description = "Invalid input"),
+        ApiResponse(responseCode = "403", description = "User is not a seller"),
         ApiResponse(responseCode = "404", description = "User not found"),
         ApiResponse(responseCode = "500", description = "Internal server error")
     )

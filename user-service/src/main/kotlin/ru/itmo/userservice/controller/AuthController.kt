@@ -2,6 +2,8 @@ package ru.itmo.userservice.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
@@ -33,6 +35,12 @@ class AuthController(
 
     @PostMapping("/roles/assign")
     @Operation(summary = "Assign role to user", description = "Admin only - assigns SELLER or MODERATOR role")
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "Role assigned successfully"),
+        ApiResponse(responseCode = "400", description = "Invalid role or cannot assign ADMIN"),
+        ApiResponse(responseCode = "403", description = "User is not an admin"),
+        ApiResponse(responseCode = "404", description = "Target user not found")
+    ])
     fun assignRole(
         @RequestHeader("X-User-Id")
         @Parameter(hidden = true)

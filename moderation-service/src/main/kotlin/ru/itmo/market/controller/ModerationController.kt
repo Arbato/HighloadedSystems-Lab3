@@ -168,6 +168,10 @@ class ModerationController(
         summary = "Get moderation history",
         description = "Retrieve the history of all moderation actions performed by a specific moderator"
     )
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "History retrieved successfully"),
+        ApiResponse(responseCode = "403", description = "User is not a moderator")
+    ])
     fun getModerationHistory(
         @RequestHeader("X-User-Id")
         @Parameter(hidden = true)
@@ -181,6 +185,11 @@ class ModerationController(
         summary = "Get product moderation history",
         description = "Retrieve the history of all moderation actions for a specific product"
     )
+    @ApiResponses(value = [
+        ApiResponse(responseCode = "200", description = "History retrieved successfully"),
+        ApiResponse(responseCode = "403", description = "User is not a moderator"),
+        ApiResponse(responseCode = "404", description = "Product not found")
+    ])
     fun getProductModerationHistory(
         @PathVariable
         @Parameter(description = "Product ID", example = "100")
