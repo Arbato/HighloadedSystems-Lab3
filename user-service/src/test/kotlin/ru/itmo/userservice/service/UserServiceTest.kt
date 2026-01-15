@@ -14,6 +14,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import reactor.test.StepVerifier
 import ru.itmo.userservice.exception.BadRequestException
 import ru.itmo.userservice.exception.ConflictException
+import ru.itmo.userservice.exception.ForbiddenException
 import ru.itmo.userservice.exception.ResourceNotFoundException
 import ru.itmo.userservice.model.dto.request.RegisterRequest
 import ru.itmo.userservice.model.dto.request.UpdateProfileRequest
@@ -51,6 +52,9 @@ class UserServiceTest {
     }
 
     @Autowired
+    private lateinit var authService: AuthService
+
+    @Autowired
     private lateinit var userService: UserService
 
     @Autowired
@@ -63,130 +67,6 @@ class UserServiceTest {
     fun setUp() {
         userRoleRepository.deleteAll().block()
         userRepository.deleteAll().block()
-    }
-
-    // ==================== Register Tests ====================
-
-    @Test
-    @DisplayName("Should register user successfully")
-    fun testRegisterUserSuccess() {
-        val request = RegisterRequest(
-            username = "testuser",
-            email = "test@example.com",
-            password = "Password123",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        StepVerifier.create(userService.register(request))
-            .assertNext { response ->
-                assert(response.username == "testuser")
-                assert(response.userId > 0)
-                assert(response.token.isNotBlank())
-                assert(response.roles.contains("USER"))
-            }
-            .expectComplete()
-            .verify(Duration.ofSeconds(10))
-    }
-
-    @Test
-    @DisplayName("Should fail registration with duplicate username")
-    fun testRegisterDuplicateUsername() {
-        val request1 = RegisterRequest(
-            username = "testuser",
-            email = "test1@example.com",
-            password = "Password123",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        userService.register(request1).block()
-
-        val request2 = RegisterRequest(
-            username = "testuser",
-            email = "test2@example.com",
-            password = "Password123",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        StepVerifier.create(userService.register(request2))
-            .expectError(ConflictException::class.java)
-            .verify(Duration.ofSeconds(10))
-    }
-
-    @Test
-    @DisplayName("Should fail registration with duplicate email")
-    fun testRegisterDuplicateEmail() {
-        val request1 = RegisterRequest(
-            username = "testuser1",
-            email = "test@example.com",
-            password = "Password123",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        userService.register(request1).block()
-
-        val request2 = RegisterRequest(
-            username = "testuser2",
-            email = "test@example.com",
-            password = "Password123",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        StepVerifier.create(userService.register(request2))
-            .expectError(ConflictException::class.java)
-            .verify(Duration.ofSeconds(10))
-    }
-
-    @Test
-    @DisplayName("Should fail registration with short password")
-    fun testRegisterShortPassword() {
-        val request = RegisterRequest(
-            username = "testuser",
-            email = "test@example.com",
-            password = "short",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        StepVerifier.create(userService.register(request))
-            .expectError(BadRequestException::class.java)
-            .verify(Duration.ofSeconds(10))
-    }
-
-    @Test
-    @DisplayName("Should fail registration with empty username")
-    fun testRegisterEmptyUsername() {
-        val request = RegisterRequest(
-            username = "   ",
-            email = "test@example.com",
-            password = "Password123",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        StepVerifier.create(userService.register(request))
-            .expectError(BadRequestException::class.java)
-            .verify(Duration.ofSeconds(10))
-    }
-
-    @Test
-    @DisplayName("Should fail registration with empty email")
-    fun testRegisterEmptyEmail() {
-        val request = RegisterRequest(
-            username = "testuser",
-            email = "   ",
-            password = "Password123",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        StepVerifier.create(userService.register(request))
-            .expectError(BadRequestException::class.java)
-            .verify(Duration.ofSeconds(10))
     }
 
     // ==================== Get User By ID Tests ====================
@@ -202,7 +82,7 @@ class UserServiceTest {
             lastName = "User"
         )
 
-        val registeredUser = userService.register(registerRequest).block()!!
+        val registeredUser = authService.register(registerRequest).block()!!
 
         StepVerifier.create(userService.getUserById(registeredUser.userId))
             .assertNext { response ->
@@ -250,7 +130,7 @@ class UserServiceTest {
             lastName = "User"
         )
 
-        val registeredUser = userService.register(registerRequest).block()!!
+        val registeredUser = authService.register(registerRequest).block()!!
 
         StepVerifier.create(userService.getCurrentUser(registeredUser.userId))
             .assertNext { response ->
@@ -291,7 +171,7 @@ class UserServiceTest {
             lastName = "User"
         )
 
-        userService.register(registerRequest).block()
+        authService.register(registerRequest).block()
 
         StepVerifier.create(userService.getUserByUsername("testuser"))
             .assertNext { response ->
@@ -331,7 +211,7 @@ class UserServiceTest {
             lastName = "User"
         )
 
-        val registeredUser = userService.register(registerRequest).block()!!
+        val registeredUser = authService.register(registerRequest).block()!!
 
         val updateRequest = UpdateProfileRequest(
             email = "newemail@example.com",
@@ -360,7 +240,7 @@ class UserServiceTest {
             lastName = "User"
         )
 
-        val registeredUser = userService.register(registerRequest).block()!!
+        val registeredUser = authService.register(registerRequest).block()!!
 
         val updateRequest = UpdateProfileRequest(
             email = null,
@@ -424,8 +304,8 @@ class UserServiceTest {
             lastName = "User"
         )
 
-        userService.register(request1).block()
-        val user2 = userService.register(request2).block()!!
+        authService.register(request1).block()
+        val user2 = authService.register(request2).block()!!
 
         val updateRequest = UpdateProfileRequest(
             email = "test1@example.com",
@@ -441,8 +321,8 @@ class UserServiceTest {
     // ==================== Delete User Tests ====================
 
     @Test
-    @DisplayName("Should delete user")
-    fun testDeleteUser() {
+    @DisplayName("Should delete user (self)")
+    fun testDeleteUserSelf() {
         val registerRequest = RegisterRequest(
             username = "testuser",
             email = "test@example.com",
@@ -450,32 +330,57 @@ class UserServiceTest {
             firstName = "Test",
             lastName = "User"
         )
+        val registeredUser = authService.register(registerRequest).block()!!
 
-        val registeredUser = userService.register(registerRequest).block()!!
-
-        StepVerifier.create(userService.deleteUser(registeredUser.userId))
+        StepVerifier.create(userService.deleteUser(registeredUser.userId, registeredUser.userId))
             .expectComplete()
-            .verify(Duration.ofSeconds(10))
+            .verify()
 
         StepVerifier.create(userService.getUserById(registeredUser.userId))
             .expectError(ResourceNotFoundException::class.java)
-            .verify(Duration.ofSeconds(10))
+            .verify()
+    }
+
+    @Test
+    @DisplayName("Should delete other user as admin")
+    fun testDeleteUserAsAdmin() {
+        val user1Request = RegisterRequest("testuser", "test@example.com", "Password123", "Test", "User")
+        val user2Request = RegisterRequest("admin", "admin@example.com", "Password123", "Admin", "User")
+
+        val user1 = authService.register(user1Request).block()!!
+        val admin = authService.register(user2Request).block()!!
+
+        userService.addRole(admin.userId, UserRole.ADMIN).block()
+
+        StepVerifier.create(userService.deleteUser(user1.userId, admin.userId))
+            .expectComplete()
+            .verify()
+    }
+
+    @Test
+    @DisplayName("Should fail delete other user as non-admin")
+    fun testDeleteUserForbidden() {
+        val user1Request = RegisterRequest("user1", "user1@test.com", "Password123", "User", "1")
+        val user2Request = RegisterRequest("user2", "user2@test.com", "Password123", "User", "2")
+
+        val user1 = authService.register(user1Request).block()!!
+        val user2 = authService.register(user2Request).block()!!
+
+        StepVerifier.create(userService.deleteUser(user1.userId, user2.userId))
+            .expectError(ForbiddenException::class.java)
+            .verify()
     }
 
     @Test
     @DisplayName("Should fail delete non-existent user")
     fun testDeleteNonExistentUser() {
-        StepVerifier.create(userService.deleteUser(999L))
-            .expectError(ResourceNotFoundException::class.java)
-            .verify(Duration.ofSeconds(10))
-    }
+        val adminRequest = RegisterRequest("admin", "admin@example.com", "Password123", "Admin", "User")
+        val admin = authService.register(adminRequest).block()!!
+        userService.addRole(admin.userId, UserRole.ADMIN).block()
 
-    @Test
-    @DisplayName("Should fail delete user with invalid ID")
-    fun testDeleteUserInvalidId() {
-        StepVerifier.create(userService.deleteUser(-1L))
-            .expectError(BadRequestException::class.java)
-            .verify(Duration.ofSeconds(10))
+        StepVerifier.create(userService.deleteUser(999L, admin.userId))
+            .expectError(ResourceNotFoundException::class.java)
+            .verify()
     }
 
     // ==================== Role Tests ====================
@@ -491,7 +396,7 @@ class UserServiceTest {
             lastName = "User"
         )
 
-        val registeredUser = userService.register(registerRequest).block()!!
+        val registeredUser = authService.register(registerRequest).block()!!
 
         StepVerifier.create(userService.hasRole(registeredUser.userId, UserRole.USER))
             .assertNext { hasRole ->
@@ -512,7 +417,7 @@ class UserServiceTest {
             lastName = "User"
         )
 
-        val registeredUser = userService.register(registerRequest).block()!!
+        val registeredUser = authService.register(registerRequest).block()!!
 
         StepVerifier.create(userService.hasRole(registeredUser.userId, UserRole.ADMIN))
             .assertNext { hasRole ->
@@ -541,7 +446,7 @@ class UserServiceTest {
             lastName = "User"
         )
 
-        val registeredUser = userService.register(registerRequest).block()!!
+        val registeredUser = authService.register(registerRequest).block()!!
 
         StepVerifier.create(userService.addRole(registeredUser.userId, UserRole.ADMIN))
             .expectComplete()

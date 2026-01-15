@@ -13,6 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.containers.PostgreSQLContainer
 import reactor.test.StepVerifier
 import ru.itmo.userservice.exception.BadRequestException
+import ru.itmo.userservice.exception.ConflictException
 import ru.itmo.userservice.exception.ResourceNotFoundException
 import ru.itmo.userservice.model.dto.request.LoginRequest
 import ru.itmo.userservice.model.dto.request.RegisterRequest
@@ -52,9 +53,6 @@ class AuthServiceTest {
     private lateinit var authService: AuthService
 
     @Autowired
-    private lateinit var userService: UserService
-
-    @Autowired
     private lateinit var userRepository: UserRepository
 
     @Autowired
@@ -65,6 +63,132 @@ class AuthServiceTest {
         userRoleRepository.deleteAll().block()
         userRepository.deleteAll().block()
     }
+
+    // ==================== Register Tests ====================
+
+    @Test
+    @DisplayName("Should register user successfully")
+    fun testRegisterUserSuccess() {
+        val request = RegisterRequest(
+            username = "testuser",
+            email = "test@example.com",
+            password = "Password123",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        StepVerifier.create(authService.register(request))
+            .assertNext { response ->
+                assert(response.username == "testuser")
+                assert(response.userId > 0)
+                assert(response.token.isNotBlank())
+                assert(response.roles.contains("USER"))
+            }
+            .expectComplete()
+            .verify(Duration.ofSeconds(10))
+    }
+
+    @Test
+    @DisplayName("Should fail registration with duplicate username")
+    fun testRegisterDuplicateUsername() {
+        val request1 = RegisterRequest(
+            username = "testuser",
+            email = "test1@example.com",
+            password = "Password123",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        authService.register(request1).block()
+
+        val request2 = RegisterRequest(
+            username = "testuser",
+            email = "test2@example.com",
+            password = "Password123",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        StepVerifier.create(authService.register(request2))
+            .expectError(ConflictException::class.java)
+            .verify(Duration.ofSeconds(10))
+    }
+
+    @Test
+    @DisplayName("Should fail registration with duplicate email")
+    fun testRegisterDuplicateEmail() {
+        val request1 = RegisterRequest(
+            username = "testuser1",
+            email = "test@example.com",
+            password = "Password123",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        authService.register(request1).block()
+
+        val request2 = RegisterRequest(
+            username = "testuser2",
+            email = "test@example.com",
+            password = "Password123",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        StepVerifier.create(authService.register(request2))
+            .expectError(ConflictException::class.java)
+            .verify(Duration.ofSeconds(10))
+    }
+
+    @Test
+    @DisplayName("Should fail registration with short password")
+    fun testRegisterShortPassword() {
+        val request = RegisterRequest(
+            username = "testuser",
+            email = "test@example.com",
+            password = "short",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        StepVerifier.create(authService.register(request))
+            .expectError(BadRequestException::class.java)
+            .verify(Duration.ofSeconds(10))
+    }
+
+    @Test
+    @DisplayName("Should fail registration with empty username")
+    fun testRegisterEmptyUsername() {
+        val request = RegisterRequest(
+            username = "   ",
+            email = "test@example.com",
+            password = "Password123",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        StepVerifier.create(authService.register(request))
+            .expectError(BadRequestException::class.java)
+            .verify(Duration.ofSeconds(10))
+    }
+
+    @Test
+    @DisplayName("Should fail registration with empty email")
+    fun testRegisterEmptyEmail() {
+        val request = RegisterRequest(
+            username = "testuser",
+            email = "   ",
+            password = "Password123",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        StepVerifier.create(authService.register(request))
+            .expectError(BadRequestException::class.java)
+            .verify(Duration.ofSeconds(10))
+    }
+
+    // ==================== Login Tests ====================
 
     private fun createTestUser(
         username: String = "testuser",
@@ -78,10 +202,8 @@ class AuthServiceTest {
             firstName = "Test",
             lastName = "User"
         )
-        userService.register(request).block()
+        authService.register(request).block()
     }
-
-    // ==================== Login Tests ====================
 
     @Test
     @DisplayName("Should login successfully with correct credentials")

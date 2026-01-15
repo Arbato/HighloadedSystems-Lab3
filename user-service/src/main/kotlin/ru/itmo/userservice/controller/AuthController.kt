@@ -2,10 +2,13 @@ package ru.itmo.userservice.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
@@ -13,6 +16,7 @@ import ru.itmo.userservice.exception.BadRequestException
 import ru.itmo.userservice.exception.ForbiddenException
 import ru.itmo.userservice.model.dto.request.AssignRoleRequest
 import ru.itmo.userservice.model.dto.request.LoginRequest
+import ru.itmo.userservice.model.dto.request.RegisterRequest
 import ru.itmo.userservice.model.dto.response.AuthResponse
 import ru.itmo.userservice.model.enums.UserRole
 import ru.itmo.userservice.service.AuthService
@@ -25,6 +29,35 @@ class AuthController(
     private val authService: AuthService,
     private val userService: UserService
 ) {
+
+    /**
+     * Регистрация нового пользователя
+     * POST /api/auth/register
+     *
+     * @param request RegisterRequest с username, email, password, firstName, lastName
+     * @return 201 Created с UserResponse
+     * @throws ConflictException если username или email уже существуют
+     * @throws BadRequestException если валидация не прошла
+     */
+    @PostMapping("/register")
+    @Operation(
+        summary = "Register new user",
+        description = "Creates a new user with USER role by default and returns JWT token",
+        responses = [
+            ApiResponse(
+                responseCode = "201",
+                description = "User registered successfully",
+                content = [Content(schema = Schema(implementation = AuthResponse::class))]
+            ),
+            ApiResponse(responseCode = "400", description = "Invalid input"),
+            ApiResponse(responseCode = "409", description = "Username or email already exists"),
+            ApiResponse(responseCode = "500", description = "Internal server error")
+        ]
+    )
+    fun register(@Valid @RequestBody request: RegisterRequest): Mono<ResponseEntity<AuthResponse>> {
+        return authService.register(request)
+            .map { ResponseEntity.status(HttpStatus.CREATED).body(it) }
+    }
 
     @PostMapping("/login")
     @Operation(summary = "Login user", description = "Authenticates user and returns JWT token")

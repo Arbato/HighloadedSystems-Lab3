@@ -17,7 +17,7 @@ class AuthFilter(
 
     companion object {
         private val PUBLIC_ENDPOINTS = listOf(
-            "/user-service/api/users/register",
+            "/user-service/api/auth/register",
             "/user-service/api/auth/login",
             "/actuator/health",
             "/swagger-ui",

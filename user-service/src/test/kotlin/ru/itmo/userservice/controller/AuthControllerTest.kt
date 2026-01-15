@@ -21,6 +21,7 @@ import ru.itmo.userservice.model.dto.response.AuthResponse
 import ru.itmo.userservice.model.enums.UserRole
 import ru.itmo.userservice.repository.UserRepository
 import ru.itmo.userservice.repository.UserRoleRepository
+import ru.itmo.userservice.service.AuthService
 import ru.itmo.userservice.service.UserService
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -64,6 +65,9 @@ class AuthControllerTest {
     @Autowired
     private lateinit var userService: UserService
 
+    @Autowired
+    private lateinit var authService: AuthService
+
     @BeforeEach
     fun setUp() {
         userRoleRepository.deleteAll().block()
@@ -82,13 +86,114 @@ class AuthControllerTest {
             firstName = "Test",
             lastName = "User"
         )
-        return userService.register(request).block()!!
+        return authService.register(request).block()!!
     }
 
     private fun createAdminUser(): AuthResponse {
         val user = createTestUser("admin", "admin@example.com")
         userService.addRole(user.userId, UserRole.ADMIN).block()
         return user
+    }
+
+    // ==================== Register Endpoint Tests ====================
+
+    @Test
+    @DisplayName("POST /api/auth/register - Should register user")
+    fun testRegisterUser() {
+        val request = RegisterRequest(
+            username = "testuser",
+            email = "test@example.com",
+            password = "Password123",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        webTestClient.post()
+            .uri("/api/auth/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isCreated
+            .expectBody()
+            .jsonPath("$.username").isEqualTo("testuser")
+            .jsonPath("$.userId").isNotEmpty
+            .jsonPath("$.token").isNotEmpty
+            .jsonPath("$.roles").isArray
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/register - Should return 409 for duplicate username")
+    fun testRegisterDuplicateUsername() {
+        val request = RegisterRequest(
+            username = "testuser",
+            email = "test@example.com",
+            password = "Password123",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        webTestClient.post()
+            .uri("/api/auth/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isCreated
+
+        val request2 = request.copy(email = "test2@example.com")
+
+        webTestClient.post()
+            .uri("/api/auth/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request2)
+            .exchange()
+            .expectStatus().isEqualTo(409)
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/register - Should return 409 for duplicate email")
+    fun testRegisterDuplicateEmail() {
+        val request = RegisterRequest(
+            username = "testuser1",
+            email = "test@example.com",
+            password = "Password123",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        webTestClient.post()
+            .uri("/api/auth/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isCreated
+
+        val request2 = request.copy(username = "testuser2")
+
+        webTestClient.post()
+            .uri("/api/auth/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request2)
+            .exchange()
+            .expectStatus().isEqualTo(409)
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/register - Should return 400 for short password")
+    fun testRegisterShortPassword() {
+        val request = RegisterRequest(
+            username = "testuser",
+            email = "test@example.com",
+            password = "short",
+            firstName = "Test",
+            lastName = "User"
+        )
+
+        webTestClient.post()
+            .uri("/api/auth/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(request)
+            .exchange()
+            .expectStatus().isBadRequest
     }
 
     // ==================== Login Endpoint Tests ====================

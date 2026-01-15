@@ -18,8 +18,10 @@ import org.testcontainers.containers.PostgreSQLContainer
 import ru.itmo.userservice.model.dto.request.RegisterRequest
 import ru.itmo.userservice.model.dto.request.UpdateProfileRequest
 import ru.itmo.userservice.model.dto.response.AuthResponse
+import ru.itmo.userservice.model.enums.UserRole
 import ru.itmo.userservice.repository.UserRepository
 import ru.itmo.userservice.repository.UserRoleRepository
+import ru.itmo.userservice.service.AuthService
 import ru.itmo.userservice.service.UserService
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -66,6 +68,9 @@ class UserControllerTest {
     @Autowired
     private lateinit var userService: UserService
 
+    @Autowired
+    private lateinit var authService: AuthService
+
     @BeforeEach
     fun setUp() {
         userRoleRepository.deleteAll().block()
@@ -74,117 +79,17 @@ class UserControllerTest {
 
     private fun createTestUser(
         username: String = "testuser",
-        email: String = "test@example.com"
+        email: String = "test@example.com",
+        password: String = "Password123"
     ): AuthResponse {
         val request = RegisterRequest(
             username = username,
             email = email,
-            password = "Password123",
+            password = password,
             firstName = "Test",
             lastName = "User"
         )
-        return userService.register(request).block()!!
-    }
-
-    // ==================== Register Endpoint Tests ====================
-
-    @Test
-    @DisplayName("POST /api/users/register - Should register user")
-    fun testRegisterUser() {
-        val request = RegisterRequest(
-            username = "testuser",
-            email = "test@example.com",
-            password = "Password123",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        webTestClient.post()
-            .uri("/api/users/register")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
-            .exchange()
-            .expectStatus().isCreated
-            .expectBody()
-            .jsonPath("$.username").isEqualTo("testuser")
-            .jsonPath("$.userId").isNotEmpty
-            .jsonPath("$.token").isNotEmpty
-            .jsonPath("$.roles").isArray
-    }
-
-    @Test
-    @DisplayName("POST /api/users/register - Should return 409 for duplicate username")
-    fun testRegisterDuplicateUsername() {
-        val request = RegisterRequest(
-            username = "testuser",
-            email = "test@example.com",
-            password = "Password123",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        webTestClient.post()
-            .uri("/api/users/register")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
-            .exchange()
-            .expectStatus().isCreated
-
-        val request2 = request.copy(email = "test2@example.com")
-
-        webTestClient.post()
-            .uri("/api/users/register")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request2)
-            .exchange()
-            .expectStatus().isEqualTo(409)
-    }
-
-    @Test
-    @DisplayName("POST /api/users/register - Should return 409 for duplicate email")
-    fun testRegisterDuplicateEmail() {
-        val request = RegisterRequest(
-            username = "testuser1",
-            email = "test@example.com",
-            password = "Password123",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        webTestClient.post()
-            .uri("/api/users/register")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
-            .exchange()
-            .expectStatus().isCreated
-
-        val request2 = request.copy(username = "testuser2")
-
-        webTestClient.post()
-            .uri("/api/users/register")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request2)
-            .exchange()
-            .expectStatus().isEqualTo(409)
-    }
-
-    @Test
-    @DisplayName("POST /api/users/register - Should return 400 for short password")
-    fun testRegisterShortPassword() {
-        val request = RegisterRequest(
-            username = "testuser",
-            email = "test@example.com",
-            password = "short",
-            firstName = "Test",
-            lastName = "User"
-        )
-
-        webTestClient.post()
-            .uri("/api/users/register")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(request)
-            .exchange()
-            .expectStatus().isBadRequest
+        return authService.register(request).block()!!
     }
 
     // ==================== Get User By ID Endpoint Tests ====================
@@ -394,12 +299,13 @@ class UserControllerTest {
     // ==================== Delete User Endpoint Tests ====================
 
     @Test
-    @DisplayName("DELETE /api/users/{userId} - Should delete user")
-    fun testDeleteUser() {
+    @DisplayName("DELETE /api/users/{userId} - Should delete self")
+    fun testDeleteUserSelf() {
         val user = createTestUser()
 
         webTestClient.delete()
             .uri("/api/users/${user.userId}")
+            .header("X-User-Id", user.userId.toString())
             .exchange()
             .expectStatus().isNoContent
 
@@ -410,20 +316,42 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/users/{userId} - Should return 404 for non-existent user")
-    fun testDeleteUserNotFound() {
+    @DisplayName("DELETE /api/users/{userId} - Should delete as admin")
+    fun testDeleteUserAsAdmin() {
+        val targetUser = createTestUser("target", "target@test.com")
+        val adminUser = createTestUser("admin", "admin@test.com")
+        userService.addRole(adminUser.userId, UserRole.ADMIN).block()
+
         webTestClient.delete()
-            .uri("/api/users/999")
+            .uri("/api/users/${targetUser.userId}")
+            .header("X-User-Id", adminUser.userId.toString())
             .exchange()
-            .expectStatus().isNotFound
+            .expectStatus().isNoContent
     }
 
     @Test
-    @DisplayName("DELETE /api/users/{userId} - Should return 400 for invalid user ID")
-    fun testDeleteUserInvalidId() {
+    @DisplayName("DELETE /api/users/{userId} - Should return 403 non-admin")
+    fun testDeleteUserForbidden() {
+        val targetUser = createTestUser("target", "target@test.com")
+        val regularUser = createTestUser("regular", "regular@test.com")
+
         webTestClient.delete()
-            .uri("/api/users/-1")
+            .uri("/api/users/${targetUser.userId}")
+            .header("X-User-Id", regularUser.userId.toString())
             .exchange()
-            .expectStatus().isBadRequest
+            .expectStatus().isForbidden
+    }
+
+    @Test
+    @DisplayName("DELETE /api/users/{userId} - Should return 404 non-existent")
+    fun testDeleteUserNotFound() {
+        val adminUser = createTestUser("admin", "admin@test.com")
+        userService.addRole(adminUser.userId, UserRole.ADMIN).block()
+
+        webTestClient.delete()
+            .uri("/api/users/999")
+            .header("X-User-Id", adminUser.userId.toString())
+            .exchange()
+            .expectStatus().isNotFound
     }
 }

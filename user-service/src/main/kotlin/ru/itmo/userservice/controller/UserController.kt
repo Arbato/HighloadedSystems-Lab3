@@ -5,16 +5,12 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
-import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import reactor.core.publisher.Mono
-import ru.itmo.userservice.model.dto.request.RegisterRequest
 import ru.itmo.userservice.model.dto.request.UpdateProfileRequest
-import ru.itmo.userservice.model.dto.response.AuthResponse
 import ru.itmo.userservice.model.dto.response.UserResponse
 import ru.itmo.userservice.model.dto.response.ErrorResponse
 import ru.itmo.userservice.service.UserService
@@ -27,36 +23,6 @@ import org.springframework.validation.annotation.Validated
 class UserController(
     private val userService: UserService
 ) {
-    
-    /**
-     * Регистрация нового пользователя
-     * POST /api/users/register
-     * 
-     * @param request RegisterRequest с username, email, password, firstName, lastName
-     * @return 201 Created с UserResponse
-     * @throws ConflictException если username или email уже существуют
-     * @throws BadRequestException если валидация не прошла
-     */
-    @PostMapping("/register")
-    @Operation(
-        summary = "Register new user",
-        description = "Creates a new user with USER role by default and returns JWT token",
-        responses = [
-            ApiResponse(
-                responseCode = "201",
-                description = "User registered successfully",
-                content = [Content(schema = Schema(implementation = AuthResponse::class))]
-            ),
-            ApiResponse(responseCode = "400", description = "Invalid input"),
-            ApiResponse(responseCode = "409", description = "Username or email already exists"),
-            ApiResponse(responseCode = "500", description = "Internal server error")
-        ]
-    )
-    fun register(@Valid @RequestBody request: RegisterRequest): Mono<ResponseEntity<AuthResponse>> {
-        return userService.register(request)
-            .map { ResponseEntity.status(HttpStatus.CREATED).body(it) }
-    }
-    
     /**
      * Получить информацию о текущем пользователе
      * GET /api/users/me
@@ -237,12 +203,18 @@ class UserController(
         responses = [
             ApiResponse(responseCode = "204", description = "User deleted successfully"),
             ApiResponse(responseCode = "400", description = "Invalid userId"),
+            ApiResponse(responseCode = "403", description = "Insufficient permissions"),
             ApiResponse(responseCode = "404", description = "User not found"),
             ApiResponse(responseCode = "500", description = "Internal server error")
         ]
     )
-    fun deleteUser(@PathVariable userId: Long): Mono<ResponseEntity<Void>> {
-        return userService.deleteUser(userId)
+    fun deleteUser(
+        @PathVariable userId: Long,
+        @RequestHeader("X-User-Id")
+        @Parameter(hidden = true)
+        currentUserId: Long
+    ): Mono<ResponseEntity<Void>> {
+        return userService.deleteUser(userId, currentUserId)
             .then(Mono.just(ResponseEntity.noContent().build<Void>()))
     }
 }
