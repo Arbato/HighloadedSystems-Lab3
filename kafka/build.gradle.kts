@@ -39,6 +39,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
+
+    implementation("org.springframework.cloud:spring-cloud-starter-config:4.0.7")
+    implementation("org.springframework.cloud:spring-cloud-config-client:4.0.7")
+    implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.0.8")
     
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
