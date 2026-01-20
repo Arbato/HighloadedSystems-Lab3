@@ -47,6 +47,7 @@ class KafkaRpcClient(
         pendingRequests[requestId] = pendingRequest
         
         try {
+
             val requestJson = objectMapper.writeValueAsString(request)
             
             val message: Message<String> = MessageBuilder

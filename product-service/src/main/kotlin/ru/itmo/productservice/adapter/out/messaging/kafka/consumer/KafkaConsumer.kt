@@ -16,7 +16,6 @@ class KafkaConsumer(
     @KafkaListener(
         topics = ["product-service-replies"],
         groupId = "product-service-rpc-replies",
-        containerFactory = "rpcReplyListenerContainerFactory"
     )
     fun handleUserServiceResponse(
         @Payload response: String,

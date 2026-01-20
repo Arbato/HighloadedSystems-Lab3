@@ -25,8 +25,7 @@ class ProductServiceRequestListener(
 
     @KafkaListener(
         topics = arrayOf("user-service-requests"),
-        groupId = "user-service-request-processor",
-        containerFactory = "kafkaListenerContainerFactory"
+        groupId = "user-service-request-processor"
     )
     fun handleProductServiceRequest(
         @Payload requestJson: String,
