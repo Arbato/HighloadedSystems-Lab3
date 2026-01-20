@@ -4,6 +4,9 @@ server:
     context-path: /
 
 spring:
+  kafka:
+    bootstrap-servers: kafka:9092
+
   r2dbc:
     url: r2dbc:postgresql://${DB_HOST:postgres-user}:${DB_PORT:5432}/${DB_NAME:itmomarket_user}
     username: ${DB_USER:itmouser}
