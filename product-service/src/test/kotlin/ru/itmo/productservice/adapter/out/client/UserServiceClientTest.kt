@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.BeforeEach
-import ru.itmo.productservice.exception.ResourceNotFoundException
-import ru.itmo.productservice.exception.ServiceUnavailableException
+import ru.itmo.productservice.adapter.exception.ResourceNotFoundException
+import ru.itmo.productservice.adapter.exception.ServiceUnavailableException
 import java.nio.charset.StandardCharsets
 
 @DisplayName("UserServiceClient Tests")

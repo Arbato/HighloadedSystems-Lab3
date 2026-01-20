@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import ru.itmo.productservice.adapter.exception.BadRequestException
 import ru.itmo.productservice.adapter.exception.ForbiddenException
 import ru.itmo.productservice.adapter.exception.ResourceNotFoundException
+import ru.itmo.productservice.adapter.`in`.web.ShopController
 import ru.itmo.productservice.domain.model.dto.request.CreateShopRequest
 import ru.itmo.productservice.domain.model.dto.request.UpdateShopRequest
 import ru.itmo.productservice.domain.model.dto.response.PaginatedResponse
@@ -31,7 +32,7 @@ import java.time.LocalDateTime
     "spring.cloud.config.enabled=false",
     "eureka.client.enabled=false"
 ])
-@org.springframework.context.annotation.Import(ru.itmo.productservice.exception.GlobalExceptionHandler::class)
+@org.springframework.context.annotation.Import(ru.itmo.productservice.adapter.exception.GlobalExceptionHandler::class)
 @DisplayName("ShopController Tests")
 class ShopControllerTest {
 
