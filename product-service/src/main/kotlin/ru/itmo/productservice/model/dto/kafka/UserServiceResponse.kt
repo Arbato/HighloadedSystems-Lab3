@@ -4,9 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDateTime
 
 data class UserServiceResponse(
-    @JsonProperty("request_id")
-    val requestId: String,
-    
     @JsonProperty("success")
     val success: Boolean,
     

@@ -3,7 +3,8 @@ package ru.itmo.orderservice.service
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import ru.itmo.orderservice.client.ProductServiceClient
+import org.slf4j.LoggerFactory
+import ru.itmo.orderservice.client.KafkaRpcClient
 import ru.itmo.orderservice.exception.BadRequestException
 import ru.itmo.orderservice.exception.ResourceNotFoundException
 import ru.itmo.orderservice.model.dto.request.CreateOrderRequest
@@ -22,64 +23,73 @@ import java.time.LocalDateTime
 class OrderService(
     private val orderRepository: OrderRepository,
     private val orderItemRepository: OrderItemRepository,
-    private val productServiceClient: ProductServiceClient
+    private val kafkaRpcClient: KafkaRpcClient
 ) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+
+    private fun validateUser(userId: Long) {
+    if (userId <= 0) {
+        throw BadRequestException("Invalid user ID: $userId")
+    }
     
-    /**
-     * Получить корзину пользователя
-     */
+    try {
+        logger.debug("Validating user: $userId")
+        val user = kafkaRpcClient.getUserById(userId)
+        logger.debug("User $userId validated successfully")
+    } catch (e: ResourceNotFoundException) {
+        throw e
+    } catch (e: Exception) {
+        logger.error("Error validating user $userId", e)
+        throw e
+    }
+}
+
+    
     fun getCart(userId: Long): OrderResponse {
-        if (userId <= 0) {
-            throw BadRequestException("Invalid user ID: $userId")
-        }
+        validateUser(userId)
         
         val cart = orderRepository.findByUserIdAndStatus(userId, OrderStatus.CART)
             .orElseGet {
                 Order(userId = userId, status = OrderStatus.CART)
             }
         
-        // Если это новая корзина, сохраняем её
         if (cart.id == 0L) {
             orderRepository.save(cart)
         }
         
-        return cart.toResponse(orderItemRepository, productServiceClient)
+        return cart.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
-    /**
-     * Добавить товар в корзину
-     */
     @Transactional
     fun addToCart(userId: Long, productId: Long, quantity: Int): OrderResponse {
-        if (userId <= 0 || productId <= 0) {
-            throw BadRequestException("Invalid user ID or product ID")
-        }
+        
+        validateUser(userId)
         
         if (quantity < 1) {
             throw BadRequestException("Quantity must be at least 1")
         }
         
-        // Проверяем что товар существует
-        val product = productServiceClient.getProductById(productId)
+        logger.info("Adding product $productId to cart for user $userId (quantity: $quantity)")
         
-        // Получаем или создаем корзину
+        val product = kafkaRpcClient.getProductById(productId)
+        
         var cart = orderRepository.findByUserIdAndStatus(userId, OrderStatus.CART)
-            .orElseGet { Order(userId = userId, status = OrderStatus.CART) }
+            .orElseGet {
+                Order(userId = userId, status = OrderStatus.CART)
+            }
         
         if (cart.id == 0L) {
             cart = orderRepository.save(cart)
         }
         
-        // Ищем товар в корзине
         val existingItem = orderItemRepository.findByOrderIdAndProductId(cart.id, productId)
         
         if (existingItem.isPresent) {
-            // Увеличиваем количество
             val item = existingItem.get()
             val updatedItem = item.copy(quantity = item.quantity + quantity)
             orderItemRepository.save(updatedItem)
+            logger.debug("Updated existing cart item: $productId (new quantity: ${updatedItem.quantity})")
         } else {
-            // Добавляем новый товар
             val newItem = OrderItem(
                 orderId = cart.id,
                 productId = productId,
@@ -87,9 +97,9 @@ class OrderService(
                 price = product.price
             )
             orderItemRepository.save(newItem)
+            logger.debug("Added new cart item: $productId (quantity: $quantity)")
         }
         
-        // Пересчитываем итоговую цену
         val items = orderItemRepository.findAllByOrderId(cart.id)
         val newTotal = items.fold(BigDecimal.ZERO) { acc, item ->
             acc + (item.price * BigDecimal(item.quantity))
@@ -98,44 +108,40 @@ class OrderService(
         val updatedCart = cart.copy(totalPrice = newTotal)
         orderRepository.save(updatedCart)
         
-        return updatedCart.toResponse(orderItemRepository, productServiceClient)
+        logger.info("Cart updated for user $userId. New total: $newTotal")
+        return updatedCart.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
-    /**
-     * Обновить количество товара в корзине
-     */
     @Transactional
     fun updateCartItemQuantity(userId: Long, itemId: Long, quantity: Int): OrderResponse {
-        if (userId <= 0 || itemId <= 0) {
-            throw BadRequestException("Invalid user ID or item ID")
-        }
+        
+        validateUser(userId)
         
         if (quantity < 0) {
             throw BadRequestException("Quantity must be non-negative")
         }
         
-        // Получаем корзину
-        val cart = orderRepository.findByUserIdAndStatus(userId, OrderStatus.CART)
-            .orElseThrow { ResourceNotFoundException("Cart not found for user: $userId") }
+        logger.info("Updating cart item $itemId for user $userId to quantity $quantity")
         
-        // Получаем товар
+        val cart = orderRepository.findByUserIdAndStatus(userId, OrderStatus.CART)
+            .orElseThrow { ResourceNotFoundException("Cart not found for user $userId") }
+        
         val item = orderItemRepository.findById(itemId)
             .orElseThrow { ResourceNotFoundException("Item not found: $itemId") }
         
-        // Проверяем что товар в нужной корзине
         if (item.orderId != cart.id) {
             throw BadRequestException("Item does not belong to user's cart")
         }
         
-        // Если количество 0, удаляем товар
         if (quantity == 0) {
             orderItemRepository.deleteById(itemId)
+            logger.debug("Removed cart item: $itemId")
         } else {
             val updatedItem = item.copy(quantity = quantity)
             orderItemRepository.save(updatedItem)
+            logger.debug("Updated cart item: $itemId (new quantity: $quantity)")
         }
         
-        // Пересчитываем итоговую цену
         val items = orderItemRepository.findAllByOrderId(cart.id)
         val newTotal = items.fold(BigDecimal.ZERO) { acc, orderItem ->
             acc + (orderItem.price * BigDecimal(orderItem.quantity))
@@ -144,34 +150,30 @@ class OrderService(
         val updatedCart = cart.copy(totalPrice = newTotal)
         orderRepository.save(updatedCart)
         
-        return updatedCart.toResponse(orderItemRepository, productServiceClient)
+        logger.info("Cart item updated for user $userId")
+        return updatedCart.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
-    /**
-     * Удалить товар из корзины
-     */
     @Transactional
     fun removeFromCart(userId: Long, itemId: Long): OrderResponse {
-        if (userId <= 0 || itemId <= 0) {
-            throw BadRequestException("Invalid user ID or item ID")
-        }
+       
+        validateUser(userId)
         
-        // Получаем корзину
+        logger.info("Removing cart item $itemId for user $userId")
+        
         val cart = orderRepository.findByUserIdAndStatus(userId, OrderStatus.CART)
-            .orElseThrow { ResourceNotFoundException("Cart not found for user: $userId") }
+            .orElseThrow { ResourceNotFoundException("Cart not found for user $userId") }
         
-        // Получаем товар
         val item = orderItemRepository.findById(itemId)
             .orElseThrow { ResourceNotFoundException("Item not found: $itemId") }
         
-        // Проверяем что товар в нужной корзине
         if (item.orderId != cart.id) {
             throw BadRequestException("Item does not belong to user's cart")
         }
         
         orderItemRepository.deleteById(itemId)
+        logger.debug("Deleted cart item: $itemId")
         
-        // Пересчитываем итоговую цену
         val items = orderItemRepository.findAllByOrderId(cart.id)
         val newTotal = items.fold(BigDecimal.ZERO) { acc, orderItem ->
             acc + (orderItem.price * BigDecimal(orderItem.quantity))
@@ -180,96 +182,91 @@ class OrderService(
         val updatedCart = cart.copy(totalPrice = newTotal)
         orderRepository.save(updatedCart)
         
-        return updatedCart.toResponse(orderItemRepository, productServiceClient)
+        logger.info("Cart item removed for user $userId")
+        return updatedCart.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
-    /**
-     * Очистить корзину
-     */
     @Transactional
     fun clearCart(userId: Long) {
-        if (userId <= 0) {
-            throw BadRequestException("Invalid user ID: $userId")
-        }
+
+        validateUser(userId)
+        
+        logger.info("Clearing cart for user $userId")
         
         val cart = orderRepository.findByUserIdAndStatus(userId, OrderStatus.CART)
-            .orElseThrow { ResourceNotFoundException("Cart not found for user: $userId") }
+            .orElseThrow { ResourceNotFoundException("Cart not found for user $userId") }
         
         orderItemRepository.deleteByOrderId(cart.id)
         
         val clearedCart = cart.copy(totalPrice = BigDecimal.ZERO)
         orderRepository.save(clearedCart)
+        
+        logger.info("Cart cleared for user $userId")
     }
     
-    /**
-     * Оформить заказ (конвертировать корзину в заказ)
-     */
     @Transactional
     fun createOrder(userId: Long, request: CreateOrderRequest): OrderResponse {
-        if (userId <= 0) {
-            throw BadRequestException("Invalid user ID: $userId")
-        }
+        
+        validateUser(userId)
         
         if (request.deliveryAddress.isBlank()) {
             throw BadRequestException("Delivery address is required")
         }
         
-        // Получаем корзину
-        val cart = orderRepository.findByUserIdAndStatus(userId, OrderStatus.CART)
-            .orElseThrow { ResourceNotFoundException("Cart not found for user: $userId") }
+        logger.info("Creating order for user $userId with delivery address: ${request.deliveryAddress}")
         
-        // Проверяем что корзина не пуста
+        val cart = orderRepository.findByUserIdAndStatus(userId, OrderStatus.CART)
+            .orElseThrow { ResourceNotFoundException("Cart not found for user $userId") }
+        
         val items = orderItemRepository.findAllByOrderId(cart.id)
+        
         if (items.isEmpty()) {
             throw BadRequestException("Cannot create order from empty cart")
         }
         
-        // Конвертируем корзину в заказ
         val order = cart.copy(
             status = OrderStatus.PENDING,
             deliveryAddress = request.deliveryAddress
         )
         
         val savedOrder = orderRepository.save(order)
+        logger.info("Order created: ${savedOrder.id} for user $userId")
         
-        // Создаем новую пустую корзину
+        // Создай новую корзину для пользователя
         val newCart = Order(userId = userId, status = OrderStatus.CART)
         orderRepository.save(newCart)
+        logger.debug("New cart created for user $userId")
         
-        return savedOrder.toResponse(orderItemRepository, productServiceClient)
+        return savedOrder.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
-    /**
-     * Получить заказ по ID
-     */
     fun getOrderById(orderId: Long, userId: Long): OrderResponse {
-        if (orderId <= 0 || userId <= 0) {
-            throw BadRequestException("Invalid order ID or user ID")
-        }
+        
+        validateUser(userId)
+        
+        logger.info("Fetching order $orderId for user $userId")
         
         val order = orderRepository.findByIdAndUserId(orderId, userId)
             .orElseThrow { ResourceNotFoundException("Order not found: $orderId") }
         
-        return order.toResponse(orderItemRepository, productServiceClient)
+        return order.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
-    /**
-     * Получить все заказы пользователя (кроме корзины)
-     */
     fun getUserOrders(userId: Long, page: Int, pageSize: Int): PaginatedResponse<OrderResponse> {
-        if (userId <= 0) {
-            throw BadRequestException("Invalid user ID: $userId")
-        }
+        
+        validateUser(userId)
         
         if (page < 1 || pageSize < 1) {
             throw BadRequestException("Page and pageSize must be greater than 0")
         }
         
+        logger.info("Fetching orders for user $userId (page: $page, pageSize: $pageSize)")
+        
         val pageable = PageRequest.of(page - 1, pageSize)
         val orderPage = orderRepository.findAllByUserIdAndStatusNot(userId, OrderStatus.CART, pageable)
         
         return PaginatedResponse(
-            data = orderPage.content.map { it.toResponse(orderItemRepository, productServiceClient) },
+            data = orderPage.content.map { it.toResponse(orderItemRepository, kafkaRpcClient) },
             page = page,
             pageSize = pageSize,
             totalElements = orderPage.totalElements,
@@ -277,17 +274,14 @@ class OrderService(
         )
     }
     
-    /**
-     * Вспомогательный метод для преобразования Order в OrderResponse
-     */
     private fun Order.toResponse(
         orderItemRepository: OrderItemRepository,
-        productServiceClient: ProductServiceClient
+        kafkaRpcClient: KafkaRpcClient
     ): OrderResponse {
         val items = orderItemRepository.findAllByOrderId(this.id)
             .map { item ->
                 try {
-                    val product = productServiceClient.getProductById(item.productId)
+                    val product = kafkaRpcClient.getProductById(item.productId)
                     OrderItemResponse(
                         id = item.id,
                         productId = item.productId,
@@ -299,11 +293,12 @@ class OrderService(
                         createdAt = item.createdAt
                     )
                 } catch (e: Exception) {
-                    // Fallback если товар не найден
+                    logger.warn("Could not fetch product ${item.productId} for item ${item.id}", e)
+                    // Fallback если сервис недоступен
                     OrderItemResponse(
                         id = item.id,
                         productId = item.productId,
-                        productName = "Product (unavailable)",
+                        productName = "Product unavailable",
                         productPrice = item.price,
                         quantity = item.quantity,
                         price = item.price,

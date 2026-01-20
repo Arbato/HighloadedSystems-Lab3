@@ -1,8 +1,8 @@
-package ru.itmo.productservice.model.dto.kafka
+package ru.itmo.orderservice.model.dto.kafka
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-data class UserServiceRequest(    
+data class UserServiceRequest(
     @JsonProperty("request_type")
     val requestType: String,  // "GET_USER_BY_ID"
     

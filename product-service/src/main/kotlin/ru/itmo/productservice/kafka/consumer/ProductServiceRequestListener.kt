@@ -1,4 +1,4 @@
-package ru.itmo.userservice.kafka.consumer
+package ru.itmo.productservice.kafka.consumer
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
@@ -9,25 +9,25 @@ import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
-import ru.itmo.userservice.model.dto.kafka.UserServiceRequest
-import ru.itmo.userservice.model.dto.kafka.UserServiceResponse
-import ru.itmo.userservice.model.dto.kafka.UserData
-import ru.itmo.userservice.service.UserService
-import reactor.core.scheduler.Schedulers
+import ru.itmo.productservice.model.dto.kafka.ProductServiceRequest
+import ru.itmo.productservice.model.dto.kafka.ProductServiceResponse
+import ru.itmo.productservice.model.dto.kafka.ProductData
+import ru.itmo.productservice.service.ProductService
+import java.time.LocalDateTime
 
 @Component
-class UserServiceRequestListener(
-    private val userService: UserService,
+class ProductServiceRequestListener(
+    private val productService: ProductService,
     private val kafkaTemplate: KafkaTemplate<String, String>,
     private val objectMapper: ObjectMapper
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @KafkaListener(
-        topics = arrayOf("user-service-requests"),
-        groupId = "user-service-request-processor"
+        topics = arrayOf("product-service-requests"),
+        groupId = "product-service-request-processor"
     )
-    fun handleFindUserRequest(
+    fun handleProductRequest(
         @Payload requestJson: String,
         @Header("requestId") requestId: String,
         @Header("replyTopic", required = true) replyTopic: String
@@ -35,13 +35,13 @@ class UserServiceRequestListener(
         try {
             logger.info("Received RPC request: requestId=$requestId, replyTopic=$replyTopic")
             
-            val request = objectMapper.readValue(requestJson, UserServiceRequest::class.java)
+            val request = objectMapper.readValue(requestJson, ProductServiceRequest::class.java)
             
             val response = when (request.requestType) {
-                "GET_USER_BY_ID" -> handleGetUserById(request.userId!!)
+                "GET_PRODUCT_BY_ID" -> handleGetProductById(request.productId!!)
                 else -> {
                     logger.warn("Unknown request type: ${request.requestType}")
-                    UserServiceResponse(
+                    ProductServiceResponse(
                         success = false,
                         errorMessage = "Unknown request type: ${request.requestType}"
                     )
@@ -52,7 +52,7 @@ class UserServiceRequestListener(
             
         } catch (e: Exception) {
             logger.error("Error processing request: requestId=$requestId", e)
-            val errorResponse = UserServiceResponse(
+            val errorResponse = ProductServiceResponse(
                 success = false,
                 errorMessage = e.message ?: "Internal error"
             )
@@ -60,42 +60,40 @@ class UserServiceRequestListener(
         }
     }
 
-    private fun handleGetUserById(userId: Long): UserServiceResponse {
+
+    private fun handleGetProductById(productId: Long): ProductServiceResponse {
         return try {
-            val user = userService.getUserById(userId)
-                .subscribeOn(Schedulers.boundedElastic())
-                .block()
+            val product = productService.getProductById(productId)
             
-            if (user != null) {
-                UserServiceResponse(
-                    success = true,
-                    user = UserData(
-                        id = user.id,
-                        username = user.username,
-                        email = user.email,
-                        firstName = user.firstName,
-                        lastName = user.lastName,
-                        roles = user.roles.toSet(),
-                        createdAt = user.createdAt, 
-                        updatedAt = user.updatedAt, 
-                    )
+            ProductServiceResponse(
+                success = true,
+                product = ProductData(
+                    id = product.id,
+                    name = product.name,
+                    description = product.description,
+                    price = product.price,
+                    imageUrl = product.imageUrl,
+                    shopId = product.shopId,
+                    sellerId = product.sellerId,
+                    status = product.status,
+                    rejectionReason = product.rejectionReason,
+                    averageRating = null,  // TODO: добавить рейтинг если нужно
+                    commentsCount = null,  // TODO: добавить комментарии если нужно
+                    createdAt = product.createdAt,
+                    updatedAt = product.updatedAt
                 )
-            } else {
-                UserServiceResponse(
-                    success = false,
-                    errorMessage = "User not found: $userId"
-                )
-            }
+            )
         } catch (e: Exception) {
-            UserServiceResponse(
+            ProductServiceResponse(
                 success = false,
                 errorMessage = e.message ?: "Internal error"
             )
         }
     }
 
+
     private fun sendResponse(
-        response: UserServiceResponse,
+        response: ProductServiceResponse,
         requestId: String,
         replyTopic: String
     ) {
@@ -107,7 +105,7 @@ class UserServiceRequestListener(
                 .build()
             
             kafkaTemplate.send(message)
-            logger.info("Sent RPC response: requestId=$requestId, success=${response.success}")
+            logger.info("Sent RPC response: requestId=$requestId, replyTopic=$replyTopic, success=${response.success}")
         } catch (e: Exception) {
             logger.error("Error sending response: requestId=$requestId", e)
         }

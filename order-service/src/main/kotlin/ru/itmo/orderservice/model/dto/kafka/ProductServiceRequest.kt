@@ -1,14 +1,16 @@
-package ru.itmo.userservice.model.dto.kafka
+package ru.itmo.orderservice.model.dto.kafka
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-data class UserServiceRequest(
-    @JsonProperty("request_type")
-    val requestType: String, 
+data class ProductServiceRequest(
     
-    @JsonProperty("user_id")
-    val userId: Long? = null,
+    @JsonProperty("request_type")
+    val requestType: String,  
+    
+    @JsonProperty("product_id")
+    val productId: Long? = null,
     
     @JsonProperty("timestamp")
     val timestamp: Long = System.currentTimeMillis()
 )
+

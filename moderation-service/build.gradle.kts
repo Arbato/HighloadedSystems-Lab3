@@ -39,6 +39,9 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
     implementation("org.springframework.cloud:spring-cloud-starter-bootstrap")
     implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
+
+    //Kafka
+    implementation("org.springframework.kafka:spring-kafka")
     
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")

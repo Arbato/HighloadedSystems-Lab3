@@ -1,9 +1,9 @@
-package ru.itmo.userservice.model.dto.kafka
+package ru.itmo.orderservice.model.dto.kafka
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDateTime
 
-data class UserServiceResponse(
+data class UserServiceResponse( 
     @JsonProperty("success")
     val success: Boolean,
     

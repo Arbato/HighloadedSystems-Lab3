@@ -4,6 +4,26 @@ server:
     context-path: /
 
 spring:
+  kafka:
+    bootstrap-servers: kafka:9092 
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: all
+      retries: 3
+    consumer:
+      bootstrap-servers: kafka:9092
+      group-id: order-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "ru.itmo.orderservice.model.events"
+      auto-offset-reset: earliest
+      enable-auto-commit: true          
+      auto-commit-interval-ms: 5000     
+      max-poll-records: 100
+      session-timeout-ms: 30000
+
   datasource:
     url: jdbc:postgresql://${DB_HOST:postgres-order}:${DB_PORT:5432}/${DB_NAME:itmomarket_order}
     username: ${DB_USER:itmouser}
@@ -25,7 +45,7 @@ spring:
 
 logging:
   level:
-    ru.itmo.market.service: DEBUG
+    ru.itmo.market.orderservice: DEBUG
 
 springdoc:
   swagger-ui:
@@ -51,17 +71,6 @@ eureka:
       defaultZone: http://${EUREKA_HOST:eureka}:${EUREKA_PORT:8761}/eureka
     register-with-eureka: true
     fetch-registry: true
-
-# Feign Client settings
-feign:
-  client:
-    config:
-      default:
-        connectTimeout: 5000
-        readTimeout: 5000
-        loggerLevel: basic
-  circuitbreaker:
-    enabled: true
 
 # Resilience4j for Order Service
 resilience4j:

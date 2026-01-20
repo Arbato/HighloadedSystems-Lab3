@@ -7,7 +7,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients
 
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableFeignClients
 class OrderServiceApplication
 
 fun main(args: Array<String>) {

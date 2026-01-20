@@ -33,7 +33,6 @@ class KafkaRpcClient(
         logger.info("Requesting user with ID $userId (requestId: $requestId)")
         
         val request = UserServiceRequest(
-            requestId = requestId,
             requestType = "GET_USER_BY_ID",
             userId = userId
         )
