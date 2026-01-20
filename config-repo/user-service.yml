@@ -5,8 +5,8 @@ server:
 
 spring:
   kafka:
-    bootstrap-servers: kafka:9092
-    
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092,kafka-2:9093,kafka-3:9094}
+
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -14,9 +14,9 @@ spring:
         spring.json.add.type.info: false  # ← ОТКЛЮЧИТЬ metadata
       acks: all
       retries: 3
-    
+
     consumer:
-      bootstrap-servers: kafka:9092
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092,kafka-2:9093,kafka-3:9094}
       group-id: user-service-request-processor
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer  # ← JSON!

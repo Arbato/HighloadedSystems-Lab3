@@ -27,11 +27,11 @@ class KafkaConfig(
 
     @Bean
     fun userServiceRequestsTopic(): NewTopic {
-        return NewTopic("user-service-requests", 1, 1.toShort())
+        return NewTopic("user-service-requests", 3, 3.toShort())
     }
 
     @Bean
     fun productServiceRepliesTopic(): NewTopic {
-        return NewTopic("product-service-replies", 1, 1.toShort())
+        return NewTopic("product-service-replies", 3, 3.toShort())
     }
 }
