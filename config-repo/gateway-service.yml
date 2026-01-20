@@ -80,6 +80,24 @@ spring:
                     name: X-Service
                     value: moderation-service
 
+            - id: file-service
+              uri: lb://file-service
+              predicates:
+                - Path=/file-service/**
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: ^/file-service(?<remaining>/.*)$
+                    replacement: ${remaining}
+                - name: CircuitBreaker
+                  args:
+                    name: serviceCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: AddRequestHeader
+                  args:
+                    name: X-Service
+                    value: file-service
+
 resilience4j:
   circuitbreaker:
     configs:

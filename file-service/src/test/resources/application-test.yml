@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: file-service-test
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
+  kafka:
+    enabled: false
+    bootstrap-servers: localhost:9092
+
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    discovery:
+      enabled: false
+
+  config:
+    import: "optional:"
+
+server:
+  port: 0
+
+eureka:
+  client:
+    enabled: false
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin123
+
+logging:
+  level:
+    root: WARN
+    ru.itmo.fileservice: INFO
