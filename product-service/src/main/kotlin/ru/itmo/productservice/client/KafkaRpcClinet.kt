@@ -41,19 +41,6 @@ class KafkaRpcClient(
         return sendRequest(requestId, request)
     }
     
-    fun getUsersByIds(userIds: List<Long>): UserServiceResponse {
-        val requestId = UUID.randomUUID().toString()
-        logger.info("Requesting users with IDs $userIds (requestId: $requestId)")
-        
-        val request = UserServiceRequest(
-            requestId = requestId,
-            requestType = "GET_USERS_BY_IDS",
-            userIds = userIds
-        )
-        
-        return sendRequest(requestId, request)
-    }
-    
     private fun sendRequest(requestId: String, request: UserServiceRequest): UserServiceResponse {
         val latch = CountDownLatch(1)
         val pendingRequest = PendingRequest(latch = latch)
