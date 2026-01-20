@@ -4,13 +4,13 @@ import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import ru.itmo.market.model.dto.response.UserResponse
+import ru.itmo.market.domain.model.dto.response.UserResponse
 import org.springframework.context.annotation.Bean
 import feign.Response
 import feign.codec.ErrorDecoder
-import ru.itmo.market.exception.ServiceUnavailableException
-import ru.itmo.market.exception.ResourceNotFoundException
-import ru.itmo.market.exception.BadRequestException
+import ru.itmo.market.adapter.exception.ServiceUnavailableException
+import ru.itmo.market.adapter.exception.ResourceNotFoundException
+import ru.itmo.market.adapter.exception.BadRequestException
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
 import com.fasterxml.jackson.databind.ObjectMapper

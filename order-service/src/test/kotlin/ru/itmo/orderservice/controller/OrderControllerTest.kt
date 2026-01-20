@@ -1,4 +1,4 @@
-package ru.itmo.orderservice.controller
+package ru.itmo.orderservice.adapter.`in`.web
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Test
@@ -13,13 +13,13 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import ru.itmo.orderservice.exception.BadRequestException
-import ru.itmo.orderservice.exception.ResourceNotFoundException
-import ru.itmo.orderservice.model.dto.request.CreateOrderRequest
-import ru.itmo.orderservice.model.dto.response.OrderItemResponse
-import ru.itmo.orderservice.model.dto.response.OrderResponse
-import ru.itmo.orderservice.service.OrderService
-import ru.itmo.orderservice.model.dto.response.PaginatedResponse
+import ru.itmo.orderservice.adapter.exception.BadRequestException
+import ru.itmo.orderservice.adapter.exception.ResourceNotFoundException
+import ru.itmo.orderservice.domain.model.dto.request.CreateOrderRequest
+import ru.itmo.orderservice.domain.model.dto.response.OrderItemResponse
+import ru.itmo.orderservice.domain.model.dto.response.OrderResponse
+import ru.itmo.orderservice.application.service.OrderService
+import ru.itmo.orderservice.domain.model.dto.response.PaginatedResponse
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -29,7 +29,7 @@ import java.time.LocalDateTime
     "spring.cloud.config.enabled=false",
     "eureka.client.enabled=false"
 ])
-@org.springframework.context.annotation.Import(ru.itmo.orderservice.exception.GlobalExceptionHandler::class)
+@org.springframework.context.annotation.Import(ru.itmo.orderservice.adapter.exception.GlobalExceptionHandler::class)
 @DisplayName("OrderController Tests")
 class OrderControllerTest {
 

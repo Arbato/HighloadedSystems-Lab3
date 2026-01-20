@@ -8,11 +8,11 @@ import io.github.resilience4j.timelimiter.annotation.TimeLimiter
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import ru.itmo.orderservice.exception.ServiceUnavailableException
-import ru.itmo.orderservice.exception.ResourceNotFoundException
-import ru.itmo.orderservice.exception.ConflictException
-import ru.itmo.orderservice.exception.BadRequestException
-import ru.itmo.orderservice.model.dto.response.ProductResponse
+import ru.itmo.orderservice.adapter.exception.ServiceUnavailableException
+import ru.itmo.orderservice.adapter.exception.ResourceNotFoundException
+import ru.itmo.orderservice.adapter.exception.ConflictException
+import ru.itmo.orderservice.adapter.exception.BadRequestException
+import ru.itmo.orderservice.domain.model.dto.response.ProductResponse
 import java.util.concurrent.CompletableFuture
 import feign.Response
 import feign.codec.ErrorDecoder

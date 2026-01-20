@@ -14,7 +14,7 @@ import org.springframework.r2dbc.core.DatabaseClient
 import java.time.Duration
 
 @Configuration
-@EnableR2dbcRepositories(basePackages = ["ru.itmo.market.repository"])
+@EnableR2dbcRepositories(basePackages = ["ru.itmo.market.domain.repository"])
 class R2dbcConfig {
     
     @Bean

@@ -2,13 +2,13 @@ package ru.itmo.orderservice.model
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
-import ru.itmo.orderservice.model.dto.request.AddToCartRequest
-import ru.itmo.orderservice.model.dto.request.CreateOrderRequest
-import ru.itmo.orderservice.model.dto.request.UpdateQuantityRequest
-import ru.itmo.orderservice.model.dto.response.OrderItemResponse
-import ru.itmo.orderservice.model.dto.response.OrderResponse
-import ru.itmo.orderservice.model.dto.response.ProductResponse
-import ru.itmo.orderservice.model.dto.response.PaginatedResponse
+import ru.itmo.orderservice.domain.model.dto.request.AddToCartRequest
+import ru.itmo.orderservice.domain.model.dto.request.CreateOrderRequest
+import ru.itmo.orderservice.domain.model.dto.request.UpdateQuantityRequest
+import ru.itmo.orderservice.domain.model.dto.response.OrderItemResponse
+import ru.itmo.orderservice.domain.model.dto.response.OrderResponse
+import ru.itmo.orderservice.domain.model.dto.response.ProductResponse
+import ru.itmo.orderservice.domain.model.dto.response.PaginatedResponse
 import java.math.BigDecimal
 import java.time.LocalDateTime
 

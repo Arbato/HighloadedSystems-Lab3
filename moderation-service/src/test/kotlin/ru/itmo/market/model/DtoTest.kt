@@ -2,9 +2,9 @@ package ru.itmo.market.model
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
-import ru.itmo.market.model.dto.request.BulkModerationRequest
-import ru.itmo.market.model.dto.request.RejectProductRequest
-import ru.itmo.market.model.dto.response.*
+import ru.itmo.market.domain.model.dto.request.BulkModerationRequest
+import ru.itmo.market.domain.model.dto.request.RejectProductRequest
+import ru.itmo.market.domain.model.dto.response.*
 import java.math.BigDecimal
 import java.time.LocalDateTime
 

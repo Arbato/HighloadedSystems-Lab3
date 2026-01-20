@@ -7,11 +7,11 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker
 import io.github.resilience4j.timelimiter.annotation.TimeLimiter
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.*
-import ru.itmo.market.model.dto.response.ProductResponse
-import ru.itmo.market.model.dto.response.PaginatedResponse
-import ru.itmo.market.exception.ServiceUnavailableException
-import ru.itmo.market.exception.ResourceNotFoundException
-import ru.itmo.market.exception.BadRequestException
+import ru.itmo.market.domain.model.dto.response.ProductResponse
+import ru.itmo.market.domain.model.dto.response.PaginatedResponse
+import ru.itmo.market.adapter.exception.ServiceUnavailableException
+import ru.itmo.market.adapter.exception.ResourceNotFoundException
+import ru.itmo.market.adapter.exception.BadRequestException
 import java.util.concurrent.CompletableFuture
 import feign.Response
 import feign.codec.ErrorDecoder

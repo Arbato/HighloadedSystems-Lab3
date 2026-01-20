@@ -1,4 +1,4 @@
-package ru.itmo.market.exception
+package ru.itmo.market.adapter.exception
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName

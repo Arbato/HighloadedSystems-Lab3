@@ -1,4 +1,4 @@
-package ru.itmo.orderservice.repository
+package ru.itmo.orderservice.domain.repository
 
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -8,9 +8,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestPropertySource
-import ru.itmo.orderservice.model.entity.Order
-import ru.itmo.orderservice.model.entity.OrderItem
-import ru.itmo.orderservice.model.enums.OrderStatus
+import ru.itmo.orderservice.domain.model.entity.Order
+import ru.itmo.orderservice.domain.model.entity.OrderItem
+import ru.itmo.orderservice.domain.model.enums.OrderStatus
 import java.math.BigDecimal
 
 @DataJpaTest

@@ -2,8 +2,8 @@ package ru.itmo.market.model
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
-import ru.itmo.market.model.entity.ModerationAction
-import ru.itmo.market.model.entity.ModerationAudit
+import ru.itmo.market.domain.model.entity.ModerationAction
+import ru.itmo.market.domain.model.entity.ModerationAudit
 import java.time.LocalDateTime
 
 @DisplayName("Entity Tests")

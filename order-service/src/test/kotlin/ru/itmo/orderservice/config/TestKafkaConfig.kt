@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
-import ru.itmo.orderservice.kafka.client.KafkaRpcClient
+import ru.itmo.orderservice.adapter.out.messaging.kafka.client.KafkaRpcClient
 
 @Configuration
 @ConditionalOnProperty(name = ["spring.kafka.enabled"], havingValue = "false")

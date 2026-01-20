@@ -1,4 +1,4 @@
-package ru.itmo.orderservice.service
+package ru.itmo.orderservice.application.service
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
@@ -10,16 +10,16 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
-import ru.itmo.orderservice.kafka.client.KafkaRpcClient
-import ru.itmo.orderservice.exception.BadRequestException
-import ru.itmo.orderservice.exception.ResourceNotFoundException
-import ru.itmo.orderservice.model.dto.request.CreateOrderRequest
-import ru.itmo.orderservice.model.dto.response.ProductResponse
-import ru.itmo.orderservice.model.entity.Order
-import ru.itmo.orderservice.model.entity.OrderItem
-import ru.itmo.orderservice.model.enums.OrderStatus
-import ru.itmo.orderservice.repository.OrderRepository
-import ru.itmo.orderservice.repository.OrderItemRepository
+import ru.itmo.orderservice.adapter.out.messaging.kafka.client.KafkaRpcClient
+import ru.itmo.orderservice.adapter.exception.BadRequestException
+import ru.itmo.orderservice.adapter.exception.ResourceNotFoundException
+import ru.itmo.orderservice.domain.model.dto.request.CreateOrderRequest
+import ru.itmo.orderservice.domain.model.dto.response.ProductResponse
+import ru.itmo.orderservice.domain.model.entity.Order
+import ru.itmo.orderservice.domain.model.entity.OrderItem
+import ru.itmo.orderservice.domain.model.enums.OrderStatus
+import ru.itmo.orderservice.domain.repository.OrderRepository
+import ru.itmo.orderservice.domain.repository.OrderItemRepository
 import java.math.BigDecimal
 import java.time.LocalDateTime
 import java.util.*

@@ -2,9 +2,9 @@ package ru.itmo.orderservice.model
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
-import ru.itmo.orderservice.model.entity.Order
-import ru.itmo.orderservice.model.entity.OrderItem
-import ru.itmo.orderservice.model.enums.OrderStatus
+import ru.itmo.orderservice.domain.model.entity.Order
+import ru.itmo.orderservice.domain.model.entity.OrderItem
+import ru.itmo.orderservice.domain.model.enums.OrderStatus
 import java.math.BigDecimal
 import java.time.LocalDateTime
 

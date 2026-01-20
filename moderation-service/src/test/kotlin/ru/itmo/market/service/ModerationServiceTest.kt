@@ -1,4 +1,4 @@
-package ru.itmo.market.service
+package ru.itmo.market.application.service
 
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -12,16 +12,16 @@ import org.mockito.kotlin.verify
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
-import ru.itmo.market.kafka.client.KafkaRpcClient
-import ru.itmo.market.exception.ForbiddenException
-import ru.itmo.market.model.dto.request.BulkModerationRequest
-import ru.itmo.market.model.dto.response.PaginatedResponse
-import ru.itmo.market.model.dto.response.ProductResponse
-import ru.itmo.market.model.dto.response.UserResponse
-import ru.itmo.market.model.entity.ModerationAction
-import ru.itmo.market.model.entity.ModerationAudit
-import ru.itmo.market.repository.ModerationActionRepository
-import ru.itmo.market.repository.ModerationAuditRepository
+import ru.itmo.market.adapter.out.messaging.kafka.client.KafkaRpcClient
+import ru.itmo.market.adapter.exception.ForbiddenException
+import ru.itmo.market.domain.model.dto.request.BulkModerationRequest
+import ru.itmo.market.domain.model.dto.response.PaginatedResponse
+import ru.itmo.market.domain.model.dto.response.ProductResponse
+import ru.itmo.market.domain.model.dto.response.UserResponse
+import ru.itmo.market.domain.model.entity.ModerationAction
+import ru.itmo.market.domain.model.entity.ModerationAudit
+import ru.itmo.market.domain.repository.ModerationActionRepository
+import ru.itmo.market.domain.repository.ModerationAuditRepository
 import java.math.BigDecimal
 import java.time.Duration
 import java.time.LocalDateTime

@@ -1,4 +1,4 @@
-package ru.itmo.market.controller
+package ru.itmo.market.adapter.`in`.web
 
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -12,16 +12,16 @@ import org.springframework.http.HttpStatus
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
-import ru.itmo.market.exception.ForbiddenException
-import ru.itmo.market.exception.ResourceNotFoundException
-import ru.itmo.market.model.dto.request.BulkModerationRequest
-import ru.itmo.market.model.dto.request.RejectProductRequest
-import ru.itmo.market.model.dto.response.ModerationResultResponse
-import ru.itmo.market.model.dto.response.PaginatedResponse
-import ru.itmo.market.model.dto.response.ProductResponse
-import ru.itmo.market.model.entity.ModerationAction
-import ru.itmo.market.model.entity.ModerationAudit
-import ru.itmo.market.service.ModerationService
+import ru.itmo.market.adapter.exception.ForbiddenException
+import ru.itmo.market.adapter.exception.ResourceNotFoundException
+import ru.itmo.market.domain.model.dto.request.BulkModerationRequest
+import ru.itmo.market.domain.model.dto.request.RejectProductRequest
+import ru.itmo.market.domain.model.dto.response.ModerationResultResponse
+import ru.itmo.market.domain.model.dto.response.PaginatedResponse
+import ru.itmo.market.domain.model.dto.response.ProductResponse
+import ru.itmo.market.domain.model.entity.ModerationAction
+import ru.itmo.market.domain.model.entity.ModerationAudit
+import ru.itmo.market.application.service.ModerationService
 import java.math.BigDecimal
 import java.time.Duration
 import java.time.LocalDateTime

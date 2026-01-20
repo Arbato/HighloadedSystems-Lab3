@@ -1,4 +1,4 @@
-package ru.itmo.orderservice.exception
+package ru.itmo.orderservice.adapter.exception
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
