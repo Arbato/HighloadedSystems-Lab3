@@ -4,6 +4,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.itmo.productservice.client.UserServiceClient
+import ru.itmo.productservice.client.KafkaRpcClient
 import ru.itmo.productservice.exception.BadRequestException
 import ru.itmo.productservice.exception.ForbiddenException
 import ru.itmo.productservice.exception.ResourceNotFoundException
@@ -21,7 +22,7 @@ import ru.itmo.productservice.repository.ShopRepository
 class ShopService(
     private val shopRepository: ShopRepository,
     private val productRepository: ProductRepository,
-    private val userServiceClient: UserServiceClient
+    private val kafkaRpcClient: KafkaRpcClient
 ) {
     
     /**
@@ -36,7 +37,7 @@ class ShopService(
         val shopPage = shopRepository.findAll(pageable)
         
         return PaginatedResponse(
-            data = shopPage.content.map { it.toResponse(userServiceClient, productRepository) },
+            data = shopPage.content.map { it.toResponse(kafkaRpcClient, productRepository) },
             page = page,
             pageSize = pageSize,
             totalElements = shopPage.totalElements,
@@ -55,7 +56,7 @@ class ShopService(
         val shop = shopRepository.findById(shopId)
             .orElseThrow { ResourceNotFoundException("Shop not found with ID: $shopId") }
         
-        return shop.toResponse(userServiceClient, productRepository)
+        return shop.toResponse(kafkaRpcClient, productRepository)
     }
     
     /**
@@ -80,8 +81,14 @@ class ShopService(
         }
         
         // Проверяем что пользователь существует
-        userServiceClient.getUserById(sellerId)
+        //userServiceClient.getUserById(sellerId)
         
+        try {
+            kafkaRpcClient.getUserById(sellerId)
+        } catch (e : Exception) {
+            throw ResourceNotFoundException("User with ID $sellerId not found")
+        }
+
         val shop = Shop(
             name = request.name,
             description = request.description,
@@ -90,7 +97,7 @@ class ShopService(
         )
         
         val savedShop = shopRepository.save(shop)
-        return savedShop.toResponse(userServiceClient, productRepository)
+        return savedShop.toResponse(kafkaRpcClient, productRepository)
     }
     
     /**
@@ -121,7 +128,7 @@ class ShopService(
         )
         
         val savedShop = shopRepository.save(updatedShop)
-        return savedShop.toResponse(userServiceClient, productRepository)
+        return savedShop.toResponse(kafkaRpcClient, productRepository)
     }
     
     /**
@@ -160,11 +167,11 @@ class ShopService(
      * Вспомогательный метод для преобразования Entity в Response
      */
     private fun Shop.toResponse(
-        userServiceClient: UserServiceClient,
+        kafkaRpcClient: KafkaRpcClient,
         productRepository: ProductRepository
     ): ShopResponse {
         val user = try {
-            userServiceClient.getUserById(this.sellerId)
+            kafkaRpcClient.getUserById(this.sellerId).user
         } catch (e: Exception) {
             null
         }

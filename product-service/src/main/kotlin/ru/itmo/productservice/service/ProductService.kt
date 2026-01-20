@@ -4,6 +4,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import ru.itmo.productservice.client.UserServiceClient
+import ru.itmo.productservice.client.KafkaRpcClient
 import ru.itmo.productservice.exception.BadRequestException
 import ru.itmo.productservice.exception.ForbiddenException
 import ru.itmo.productservice.exception.ResourceNotFoundException
@@ -22,7 +23,7 @@ import java.math.BigDecimal
 class ProductService(
     private val productRepository: ProductRepository,
     private val shopRepository: ShopRepository,
-    private val userServiceClient: UserServiceClient
+    private val kafkaRpcClient: KafkaRpcClient
 ) {
     
     /**
@@ -160,8 +161,13 @@ class ProductService(
             .orElseThrow { ResourceNotFoundException("Product not found with ID: $productId") }
         
         // Проверяем что пользователь - модератор
-        val user = userServiceClient.getUserById(userId)
-        if (!user.roles.contains(UserRole.MODERATOR.name)) {
+        val user = try {
+            kafkaRpcClient.getUserById(userId).user
+        } catch (e : Exception) {
+            throw ResourceNotFoundException("User not found with ID $userId")
+        }
+
+        if (!user!!.roles.contains(UserRole.MODERATOR.name)) {
             throw ForbiddenException("Only moderators can update products")
         }
         
@@ -189,8 +195,13 @@ class ProductService(
             .orElseThrow { ResourceNotFoundException("Product not found with ID: $productId") }
         
         // Проверяем что пользователь - модератор
-        val user = userServiceClient.getUserById(moderatorId)
-        if (!user.roles.contains(UserRole.MODERATOR.name)) {
+        val user = try {
+            kafkaRpcClient.getUserById(moderatorId).user
+        } catch (e : Exception) {
+            throw ResourceNotFoundException("User not found with ID $moderatorId")
+        }
+        
+        if (!user!!.roles.contains(UserRole.MODERATOR.name)) {
             throw ForbiddenException("Only moderators can approve products")
         }
         
@@ -221,8 +232,13 @@ class ProductService(
             .orElseThrow { ResourceNotFoundException("Product not found with ID: $productId") }
         
         // Проверяем что пользователь - модератор
-        val user = userServiceClient.getUserById(moderatorId)
-        if (!user.roles.contains(UserRole.MODERATOR.name)) {
+        val user = try {
+            kafkaRpcClient.getUserById(moderatorId).user
+        } catch (e : Exception) {
+            throw ResourceNotFoundException("User not found with ID $moderatorId")
+        }
+
+        if (!user!!.roles.contains(UserRole.MODERATOR.name)) {
             throw ForbiddenException("Only moderators can reject products")
         }
         
@@ -252,8 +268,13 @@ class ProductService(
             .orElseThrow { ResourceNotFoundException("Product not found with ID: $productId") }
         
         // Проверяем что пользователь - модератор или владелец
-        val user = userServiceClient.getUserById(userId)
-        if (product.sellerId != userId && !user.roles.contains(UserRole.MODERATOR.name)) {
+        val user = try {
+            kafkaRpcClient.getUserById(userId).user
+        } catch (e : Exception) {
+            throw ResourceNotFoundException("User not found with ID $userId")
+        }
+
+        if (product.sellerId != userId && !user!!.roles.contains(UserRole.MODERATOR.name)) {
             throw ForbiddenException("You can only delete your own products")
         }
         

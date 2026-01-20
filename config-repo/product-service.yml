@@ -4,6 +4,24 @@ server:
     context-path: /
 
 spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: product-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      auto-commit-interval-ms: 1000
+
+
+spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:postgres-product}:${DB_PORT:5432}/${DB_NAME:itmomarket_product}
     username: ${DB_USER:itmouser}
