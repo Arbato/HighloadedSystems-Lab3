@@ -8,6 +8,7 @@ import org.springframework.kafka.support.KafkaHeaders
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.messaging.support.MessageBuilder
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import ru.itmo.userservice.domain.model.dto.kafka.UserServiceRequest
 import ru.itmo.userservice.domain.model.dto.kafka.UserServiceResponse
@@ -16,6 +17,7 @@ import ru.itmo.userservice.application.service.UserService
 import reactor.core.scheduler.Schedulers
 
 @Component
+@ConditionalOnProperty(name = ["spring.kafka.enabled"], havingValue = "true", matchIfMissing = true)
 class ProductServiceRequestListener(
     private val userService: UserService,
     private val kafkaTemplate: KafkaTemplate<String, String>,

@@ -4,10 +4,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import ru.itmo.productservice.adapter.out.client.KafkaRpcClient
 
 @Component
+@ConditionalOnProperty(name = ["spring.kafka.enabled"], havingValue = "true", matchIfMissing = true)
 class KafkaConsumer(
     private val kafkaRpcClient: KafkaRpcClient
 ) {

@@ -10,13 +10,14 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
-import ru.itmo.productservice.adapter.out.client.UserServiceClient
+import ru.itmo.productservice.adapter.out.client.KafkaRpcClient
 import ru.itmo.productservice.adapter.exception.BadRequestException
 import ru.itmo.productservice.adapter.exception.ForbiddenException
 import ru.itmo.productservice.adapter.exception.ResourceNotFoundException
 import ru.itmo.productservice.domain.model.dto.request.CreateShopRequest
 import ru.itmo.productservice.domain.model.dto.request.UpdateShopRequest
-import ru.itmo.productservice.domain.model.dto.response.UserResponse
+import ru.itmo.productservice.domain.model.dto.kafka.UserServiceResponse
+import ru.itmo.productservice.domain.model.dto.kafka.UserData
 import ru.itmo.productservice.domain.model.entity.Product
 import ru.itmo.productservice.domain.model.entity.Shop
 import ru.itmo.productservice.domain.model.enums.ProductStatus
@@ -37,7 +38,7 @@ class ShopServiceTest {
     private lateinit var productRepository: ProductRepository
 
     @Mock
-    private lateinit var userServiceClient: UserServiceClient
+    private lateinit var kafkaRpcClient: KafkaRpcClient
 
     private lateinit var shopService: ShopService
 
@@ -66,7 +67,7 @@ class ShopServiceTest {
 
     private val now = LocalDateTime.now()
 
-    private val testUser = UserResponse(
+    private val testUserData = UserData(
         id = 1L,
         username = "seller",
         email = "seller@test.com",
@@ -77,9 +78,15 @@ class ShopServiceTest {
         updatedAt = now
     )
 
+    private val testUserResponse = UserServiceResponse(
+        requestId = "test-request-id",
+        success = true,
+        user = testUserData
+    )
+
     @BeforeEach
     fun setUp() {
-        shopService = ShopService(shopRepository, productRepository, userServiceClient)
+        shopService = ShopService(shopRepository, productRepository, kafkaRpcClient)
     }
 
     // ==================== getAllShops ====================
@@ -91,7 +98,7 @@ class ShopServiceTest {
         val page = PageImpl(shops, PageRequest.of(0, 10), 1)
 
         whenever(shopRepository.findAll(PageRequest.of(0, 10))).thenReturn(page)
-        whenever(userServiceClient.getUserById(1L)).thenReturn(testUser)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(testUserResponse)
         whenever(productRepository.countByShopId(1L)).thenReturn(5L)
 
         val result = shopService.getAllShops(1, 10)
@@ -146,7 +153,7 @@ class ShopServiceTest {
         val page = PageImpl(shops, PageRequest.of(0, 10), 1)
 
         whenever(shopRepository.findAll(PageRequest.of(0, 10))).thenReturn(page)
-        whenever(userServiceClient.getUserById(1L)).thenThrow(RuntimeException("Service unavailable"))
+        whenever(kafkaRpcClient.getUserById(1L)).thenThrow(RuntimeException("Service unavailable"))
         whenever(productRepository.countByShopId(1L)).thenReturn(5L)
 
         val result = shopService.getAllShops(1, 10)
@@ -161,7 +168,7 @@ class ShopServiceTest {
     @DisplayName("getShopById returns shop for valid ID")
     fun testGetShopByIdSuccess() {
         whenever(shopRepository.findById(1L)).thenReturn(Optional.of(testShop))
-        whenever(userServiceClient.getUserById(1L)).thenReturn(testUser)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(testUserResponse)
         whenever(productRepository.countByShopId(1L)).thenReturn(3L)
 
         val result = shopService.getShopById(1L)
@@ -202,7 +209,7 @@ class ShopServiceTest {
     @DisplayName("getShopById handles user service exception gracefully")
     fun testGetShopByIdUserServiceException() {
         whenever(shopRepository.findById(1L)).thenReturn(Optional.of(testShop))
-        whenever(userServiceClient.getUserById(1L)).thenThrow(RuntimeException("Service unavailable"))
+        whenever(kafkaRpcClient.getUserById(1L)).thenThrow(RuntimeException("Service unavailable"))
         whenever(productRepository.countByShopId(1L)).thenReturn(0L)
 
         val result = shopService.getShopById(1L)
@@ -223,7 +230,7 @@ class ShopServiceTest {
         )
 
         whenever(shopRepository.existsBySellerId(1L)).thenReturn(false)
-        whenever(userServiceClient.getUserById(1L)).thenReturn(testUser)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(testUserResponse)
         whenever(shopRepository.save(any<Shop>())).thenAnswer { invocation ->
             (invocation.arguments[0] as Shop).copy(id = 1L)
         }
@@ -294,7 +301,7 @@ class ShopServiceTest {
         val request = CreateShopRequest(name = "Shop", description = null, avatarUrl = null)
 
         whenever(shopRepository.existsBySellerId(1L)).thenReturn(false)
-        whenever(userServiceClient.getUserById(1L)).thenReturn(testUser)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(testUserResponse)
         whenever(shopRepository.save(any<Shop>())).thenAnswer { invocation ->
             (invocation.arguments[0] as Shop).copy(id = 1L)
         }
@@ -302,7 +309,7 @@ class ShopServiceTest {
 
         shopService.createShop(1L, request)
 
-        verify(userServiceClient, atLeast(1)).getUserById(1L)
+        verify(kafkaRpcClient, atLeast(1)).getUserById(1L)
     }
 
     // ==================== updateShop ====================
@@ -318,7 +325,7 @@ class ShopServiceTest {
 
         whenever(shopRepository.findById(1L)).thenReturn(Optional.of(testShop))
         whenever(shopRepository.save(any<Shop>())).thenAnswer { it.arguments[0] as Shop }
-        whenever(userServiceClient.getUserById(1L)).thenReturn(testUser)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(testUserResponse)
         whenever(productRepository.countByShopId(1L)).thenReturn(0L)
 
         val result = shopService.updateShop(1L, 1L, request)
@@ -378,7 +385,7 @@ class ShopServiceTest {
 
         whenever(shopRepository.findById(1L)).thenReturn(Optional.of(testShop))
         whenever(shopRepository.save(any<Shop>())).thenAnswer { it.arguments[0] as Shop }
-        whenever(userServiceClient.getUserById(1L)).thenReturn(testUser)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(testUserResponse)
         whenever(productRepository.countByShopId(1L)).thenReturn(0L)
 
         val result = shopService.updateShop(1L, 1L, request)

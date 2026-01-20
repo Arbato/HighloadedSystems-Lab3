@@ -10,13 +10,14 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
-import ru.itmo.productservice.adapter.out.client.UserServiceClient
+import ru.itmo.productservice.adapter.out.client.KafkaRpcClient
 import ru.itmo.productservice.adapter.exception.BadRequestException
 import ru.itmo.productservice.adapter.exception.ForbiddenException
 import ru.itmo.productservice.adapter.exception.ResourceNotFoundException
 import ru.itmo.productservice.domain.model.dto.request.CreateProductRequest
 import ru.itmo.productservice.domain.model.dto.request.UpdateProductRequest
-import ru.itmo.productservice.domain.model.dto.response.UserResponse
+import ru.itmo.productservice.domain.model.dto.kafka.UserServiceResponse
+import ru.itmo.productservice.domain.model.dto.kafka.UserData
 import ru.itmo.productservice.domain.model.entity.Product
 import ru.itmo.productservice.domain.model.entity.Shop
 import ru.itmo.productservice.domain.model.enums.ProductStatus
@@ -37,7 +38,7 @@ class ProductServiceTest {
     private lateinit var shopRepository: ShopRepository
 
     @Mock
-    private lateinit var userServiceClient: UserServiceClient
+    private lateinit var kafkaRpcClient: KafkaRpcClient
 
     private lateinit var productService: ProductService
 
@@ -65,7 +66,7 @@ class ProductServiceTest {
 
     private val now = LocalDateTime.now()
 
-    private val moderatorUser = UserResponse(
+    private val moderatorUserData = UserData(
         id = 2L,
         username = "moderator",
         email = "moderator@test.com",
@@ -76,7 +77,13 @@ class ProductServiceTest {
         updatedAt = now
     )
 
-    private val regularUser = UserResponse(
+    private val moderatorResponse = UserServiceResponse(
+        requestId = "test-request-id",
+        success = true,
+        user = moderatorUserData
+    )
+
+    private val regularUserData = UserData(
         id = 1L,
         username = "user",
         email = "user@test.com",
@@ -87,9 +94,15 @@ class ProductServiceTest {
         updatedAt = now
     )
 
+    private val regularUserResponse = UserServiceResponse(
+        requestId = "test-request-id",
+        success = true,
+        user = regularUserData
+    )
+
     @BeforeEach
     fun setUp() {
-        productService = ProductService(productRepository, shopRepository, userServiceClient)
+        productService = ProductService(productRepository, shopRepository, kafkaRpcClient)
     }
 
     // ==================== getApprovedProducts ====================
@@ -389,7 +402,7 @@ class ProductServiceTest {
         )
 
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(testProduct))
-        whenever(userServiceClient.getUserById(2L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(moderatorResponse)
         whenever(productRepository.save(any<Product>())).thenAnswer { it.arguments[0] as Product }
 
         val result = productService.updateProduct(1L, 2L, request)
@@ -404,7 +417,7 @@ class ProductServiceTest {
         val request = UpdateProductRequest(name = "Updated")
 
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(testProduct))
-        whenever(userServiceClient.getUserById(1L)).thenReturn(regularUser)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(regularUserResponse)
 
         assertThrows<ForbiddenException> {
             productService.updateProduct(1L, 1L, request)
@@ -449,7 +462,7 @@ class ProductServiceTest {
         val request = UpdateProductRequest(name = "Only Name Updated")
 
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(testProduct))
-        whenever(userServiceClient.getUserById(2L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(moderatorResponse)
         whenever(productRepository.save(any<Product>())).thenAnswer { it.arguments[0] as Product }
 
         val result = productService.updateProduct(1L, 2L, request)
@@ -467,7 +480,7 @@ class ProductServiceTest {
         val pendingProduct = testProduct.copy(status = ProductStatus.PENDING)
 
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(pendingProduct))
-        whenever(userServiceClient.getUserById(2L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(moderatorResponse)
         whenever(productRepository.save(any<Product>())).thenAnswer {
             (it.arguments[0] as Product).copy(status = ProductStatus.APPROVED)
         }
@@ -483,7 +496,7 @@ class ProductServiceTest {
         val pendingProduct = testProduct.copy(status = ProductStatus.PENDING)
 
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(pendingProduct))
-        whenever(userServiceClient.getUserById(1L)).thenReturn(regularUser)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(regularUserResponse)
 
         assertThrows<ForbiddenException> {
             productService.approveProduct(1L, 1L)
@@ -496,7 +509,7 @@ class ProductServiceTest {
         val approvedProduct = testProduct.copy(status = ProductStatus.APPROVED)
 
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(approvedProduct))
-        whenever(userServiceClient.getUserById(2L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(moderatorResponse)
 
         assertThrows<IllegalStateException> {
             productService.approveProduct(1L, 2L)
@@ -537,7 +550,7 @@ class ProductServiceTest {
         val pendingProduct = testProduct.copy(status = ProductStatus.PENDING)
 
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(pendingProduct))
-        whenever(userServiceClient.getUserById(2L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(moderatorResponse)
         whenever(productRepository.save(any<Product>())).thenAnswer {
             (it.arguments[0] as Product)
         }
@@ -570,7 +583,7 @@ class ProductServiceTest {
         val pendingProduct = testProduct.copy(status = ProductStatus.PENDING)
 
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(pendingProduct))
-        whenever(userServiceClient.getUserById(1L)).thenReturn(regularUser)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(regularUserResponse)
 
         assertThrows<ForbiddenException> {
             productService.rejectProduct(1L, 1L, "Reason")
@@ -583,7 +596,7 @@ class ProductServiceTest {
         val approvedProduct = testProduct.copy(status = ProductStatus.APPROVED)
 
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(approvedProduct))
-        whenever(userServiceClient.getUserById(2L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(moderatorResponse)
 
         assertThrows<IllegalStateException> {
             productService.rejectProduct(1L, 2L, "Reason")
@@ -608,7 +621,7 @@ class ProductServiceTest {
     @DisplayName("deleteProduct deletes product by moderator")
     fun testDeleteProductByModerator() {
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(testProduct))
-        whenever(userServiceClient.getUserById(2L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(moderatorResponse)
         doNothing().whenever(productRepository).deleteById(1L)
 
         productService.deleteProduct(1L, 2L)
@@ -620,7 +633,7 @@ class ProductServiceTest {
     @DisplayName("deleteProduct deletes product by owner")
     fun testDeleteProductByOwner() {
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(testProduct))
-        whenever(userServiceClient.getUserById(1L)).thenReturn(regularUser)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(regularUserResponse)
         doNothing().whenever(productRepository).deleteById(1L)
 
         productService.deleteProduct(1L, 1L)
@@ -631,10 +644,15 @@ class ProductServiceTest {
     @Test
     @DisplayName("deleteProduct throws when not owner and not moderator")
     fun testDeleteProductNotAuthorized() {
-        val otherUser = regularUser.copy(id = 999L)
+        val otherUserData = regularUserData.copy(id = 999L)
+        val otherUserResponse = UserServiceResponse(
+            requestId = "test-request-id",
+            success = true,
+            user = otherUserData
+        )
 
         whenever(productRepository.findById(1L)).thenReturn(Optional.of(testProduct))
-        whenever(userServiceClient.getUserById(999L)).thenReturn(otherUser)
+        whenever(kafkaRpcClient.getUserById(999L)).thenReturn(otherUserResponse)
 
         assertThrows<ForbiddenException> {
             productService.deleteProduct(1L, 999L)

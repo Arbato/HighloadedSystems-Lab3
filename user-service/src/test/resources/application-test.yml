@@ -2,6 +2,14 @@ spring:
   application:
     name: user-service-test
 
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
+  kafka:
+    enabled: false
+    bootstrap-servers: localhost:9092
+
   cloud:
     config:
       enabled: false
