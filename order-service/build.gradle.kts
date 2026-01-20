@@ -41,6 +41,9 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation("org.springframework.cloud:spring-cloud-starter-loadbalancer")
 
+    // Kafka
+    implementation("org.springframework.kafka:spring-kafka")
+
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.1.0")
     implementation("io.github.resilience4j:resilience4j-circuitbreaker:2.1.0")
     implementation("io.github.resilience4j:resilience4j-timelimiter:2.1.0")

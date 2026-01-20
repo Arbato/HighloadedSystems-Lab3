@@ -10,7 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.*
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
-import ru.itmo.orderservice.client.ProductServiceClient
+import ru.itmo.orderservice.kafka.client.KafkaRpcClient
 import ru.itmo.orderservice.exception.BadRequestException
 import ru.itmo.orderservice.exception.ResourceNotFoundException
 import ru.itmo.orderservice.model.dto.request.CreateOrderRequest
@@ -35,7 +35,7 @@ class OrderServiceTest {
     private lateinit var orderItemRepository: OrderItemRepository
 
     @Mock
-    private lateinit var productServiceClient: ProductServiceClient
+    private lateinit var kafkaRpcClient: KafkaRpcClient
 
     private lateinit var orderService: OrderService
 
@@ -78,7 +78,7 @@ class OrderServiceTest {
 
     @BeforeEach
     fun setUp() {
-        orderService = OrderService(orderRepository, orderItemRepository, productServiceClient)
+        orderService = OrderService(orderRepository, orderItemRepository, kafkaRpcClient)
     }
 
     // ==================== getCart Tests ====================
@@ -90,7 +90,7 @@ class OrderServiceTest {
             .thenReturn(Optional.of(testOrder))
         whenever(orderItemRepository.findAllByOrderId(1L))
             .thenReturn(listOf(testOrderItem))
-        whenever(productServiceClient.getProductById(1L))
+        whenever(kafkaRpcClient.getProductById(1L))
             .thenReturn(testProduct)
 
         val result = orderService.getCart(1L)
@@ -141,7 +141,7 @@ class OrderServiceTest {
         val cart = testOrder.copy(totalPrice = BigDecimal.ZERO)
         val savedCart = cart.copy(id = 1L)
 
-        whenever(productServiceClient.getProductById(1L)).thenReturn(testProduct)
+        whenever(kafkaRpcClient.getProductById(1L)).thenReturn(testProduct)
         whenever(orderRepository.findByUserIdAndStatus(1L, OrderStatus.CART))
             .thenReturn(Optional.of(savedCart))
         whenever(orderItemRepository.findByOrderIdAndProductId(1L, 1L))
@@ -159,7 +159,7 @@ class OrderServiceTest {
     @Test
     @DisplayName("addToCart increases quantity for existing product")
     fun testAddToCartExistingProduct() {
-        whenever(productServiceClient.getProductById(1L)).thenReturn(testProduct)
+        whenever(kafkaRpcClient.getProductById(1L)).thenReturn(testProduct)
         whenever(orderRepository.findByUserIdAndStatus(1L, OrderStatus.CART))
             .thenReturn(Optional.of(testOrder))
         whenever(orderItemRepository.findByOrderIdAndProductId(1L, 1L))
@@ -211,7 +211,7 @@ class OrderServiceTest {
         val newCart = Order(id = 0L, userId = 1L, status = OrderStatus.CART)
         val savedCart = newCart.copy(id = 2L)
 
-        whenever(productServiceClient.getProductById(1L)).thenReturn(testProduct)
+        whenever(kafkaRpcClient.getProductById(1L)).thenReturn(testProduct)
         whenever(orderRepository.findByUserIdAndStatus(1L, OrderStatus.CART))
             .thenReturn(Optional.empty())
         whenever(orderRepository.save(any<Order>())).thenReturn(savedCart)
@@ -237,7 +237,7 @@ class OrderServiceTest {
         whenever(orderItemRepository.save(any<OrderItem>())).thenAnswer { it.arguments[0] }
         whenever(orderItemRepository.findAllByOrderId(1L)).thenReturn(listOf(testOrderItem))
         whenever(orderRepository.save(any<Order>())).thenAnswer { it.arguments[0] }
-        whenever(productServiceClient.getProductById(1L)).thenReturn(testProduct)
+        whenever(kafkaRpcClient.getProductById(1L)).thenReturn(testProduct)
 
         val result = orderService.updateCartItemQuantity(1L, 1L, 5)
 
@@ -427,7 +427,7 @@ class OrderServiceTest {
         whenever(orderItemRepository.findAllByOrderId(1L))
             .thenReturn(listOf(testOrderItem))
         whenever(orderRepository.save(any<Order>())).thenAnswer { it.arguments[0] }
-        whenever(productServiceClient.getProductById(1L)).thenReturn(testProduct)
+        whenever(kafkaRpcClient.getProductById(1L)).thenReturn(testProduct)
 
         val result = orderService.createOrder(1L, request)
 
@@ -495,7 +495,7 @@ class OrderServiceTest {
             .thenReturn(Optional.of(order))
         whenever(orderItemRepository.findAllByOrderId(1L))
             .thenReturn(listOf(testOrderItem))
-        whenever(productServiceClient.getProductById(1L)).thenReturn(testProduct)
+        whenever(kafkaRpcClient.getProductById(1L)).thenReturn(testProduct)
 
         val result = orderService.getOrderById(1L, 1L)
 
@@ -542,7 +542,7 @@ class OrderServiceTest {
             .thenReturn(page)
         whenever(orderItemRepository.findAllByOrderId(1L))
             .thenReturn(listOf(testOrderItem))
-        whenever(productServiceClient.getProductById(1L)).thenReturn(testProduct)
+        whenever(kafkaRpcClient.getProductById(1L)).thenReturn(testProduct)
 
         val result = orderService.getUserOrders(1L, 1, 10)
 
@@ -599,7 +599,7 @@ class OrderServiceTest {
             .thenReturn(Optional.of(testOrder))
         whenever(orderItemRepository.findAllByOrderId(1L))
             .thenReturn(listOf(testOrderItem))
-        whenever(productServiceClient.getProductById(1L))
+        whenever(kafkaRpcClient.getProductById(1L))
             .thenThrow(RuntimeException("Service unavailable"))
 
         val result = orderService.getCart(1L)

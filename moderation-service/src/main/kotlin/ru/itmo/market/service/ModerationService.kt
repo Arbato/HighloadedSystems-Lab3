@@ -6,8 +6,7 @@ import org.slf4j.LoggerFactory
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
-import ru.itmo.market.client.ProductServiceClient
-import ru.itmo.market.client.UserServiceClient
+import ru.itmo.market.kafka.client.KafkaRpcClient
 import ru.itmo.market.exception.ForbiddenException
 import ru.itmo.market.exception.ResourceNotFoundException
 import ru.itmo.market.model.dto.request.BulkModerationRequest
@@ -22,8 +21,7 @@ import java.time.LocalDateTime
 
 @Service
 class ModerationService(
-    private val productServiceClient: ProductServiceClient,
-    private val userServiceClient: UserServiceClient,
+    private val kafkaRpcClient: KafkaRpcClient,
     private val moderationActionRepository: ModerationActionRepository,
     private val moderationAuditRepository: ModerationAuditRepository
 ) {
@@ -36,7 +34,7 @@ class ModerationService(
         return verifyModerator(moderatorId)
             .flatMap {
                 Mono.fromCallable {
-                    productServiceClient.getPendingProducts(page, pageSize)
+                    kafkaRpcClient.getPendingProducts(page, pageSize)
                 }
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnSuccess { logger.info("Fetched pending products for moderator $moderatorId") }
@@ -47,7 +45,7 @@ class ModerationService(
         return verifyModerator(moderatorId)
             .flatMap {
                 Mono.fromCallable {
-                    productServiceClient.getPendingProductById(productId)
+                    kafkaRpcClient.getPendingProductById(productId)
                 }
                 .subscribeOn(Schedulers.boundedElastic())
                 .doOnSuccess { logger.info("Fetched product $productId") }
@@ -60,7 +58,7 @@ class ModerationService(
             .flatMap { userResponse ->
                 // Получаем товар и одобряем его
                 Mono.fromCallable {
-                    productServiceClient.approveProduct(productId, moderatorId)
+                    kafkaRpcClient.approveProduct(productId, moderatorId)
                 }
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap { product ->
@@ -106,7 +104,7 @@ class ModerationService(
             .flatMap { userResponse ->
                 // Получаем товар и отклоняем его
                 Mono.fromCallable {
-                    productServiceClient.rejectProduct(productId, moderatorId, reason)
+                    kafkaRpcClient.rejectProduct(productId, moderatorId, reason)
                 }
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMap { product ->
@@ -180,7 +178,7 @@ class ModerationService(
     
     private fun verifyModerator(moderatorId: Long): Mono<ru.itmo.market.model.dto.response.UserResponse> {
         return Mono.fromCallable {
-            userServiceClient.getUserById(moderatorId)
+            kafkaRpcClient.getUserById(moderatorId)
         }
         .subscribeOn(Schedulers.boundedElastic())
         .flatMap { user ->

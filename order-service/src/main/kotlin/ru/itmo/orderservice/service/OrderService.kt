@@ -3,7 +3,7 @@ package ru.itmo.orderservice.service
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import ru.itmo.orderservice.client.ProductServiceClient
+import ru.itmo.orderservice.kafka.client.KafkaRpcClient
 import ru.itmo.orderservice.exception.BadRequestException
 import ru.itmo.orderservice.exception.ResourceNotFoundException
 import ru.itmo.orderservice.model.dto.request.CreateOrderRequest
@@ -22,7 +22,7 @@ import java.time.LocalDateTime
 class OrderService(
     private val orderRepository: OrderRepository,
     private val orderItemRepository: OrderItemRepository,
-    private val productServiceClient: ProductServiceClient
+    private val kafkaRpcClient: KafkaRpcClient
 ) {
     
     /**
@@ -43,7 +43,7 @@ class OrderService(
             orderRepository.save(cart)
         }
         
-        return cart.toResponse(orderItemRepository, productServiceClient)
+        return cart.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
     /**
@@ -60,7 +60,7 @@ class OrderService(
         }
         
         // Проверяем что товар существует
-        val product = productServiceClient.getProductById(productId)
+        val product = kafkaRpcClient.getProductById(productId)
         
         // Получаем или создаем корзину
         var cart = orderRepository.findByUserIdAndStatus(userId, OrderStatus.CART)
@@ -98,7 +98,7 @@ class OrderService(
         val updatedCart = cart.copy(totalPrice = newTotal)
         orderRepository.save(updatedCart)
         
-        return updatedCart.toResponse(orderItemRepository, productServiceClient)
+        return updatedCart.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
     /**
@@ -144,7 +144,7 @@ class OrderService(
         val updatedCart = cart.copy(totalPrice = newTotal)
         orderRepository.save(updatedCart)
         
-        return updatedCart.toResponse(orderItemRepository, productServiceClient)
+        return updatedCart.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
     /**
@@ -180,7 +180,7 @@ class OrderService(
         val updatedCart = cart.copy(totalPrice = newTotal)
         orderRepository.save(updatedCart)
         
-        return updatedCart.toResponse(orderItemRepository, productServiceClient)
+        return updatedCart.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
     /**
@@ -236,7 +236,7 @@ class OrderService(
         val newCart = Order(userId = userId, status = OrderStatus.CART)
         orderRepository.save(newCart)
         
-        return savedOrder.toResponse(orderItemRepository, productServiceClient)
+        return savedOrder.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
     /**
@@ -250,7 +250,7 @@ class OrderService(
         val order = orderRepository.findByIdAndUserId(orderId, userId)
             .orElseThrow { ResourceNotFoundException("Order not found: $orderId") }
         
-        return order.toResponse(orderItemRepository, productServiceClient)
+        return order.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
     /**
@@ -269,7 +269,7 @@ class OrderService(
         val orderPage = orderRepository.findAllByUserIdAndStatusNot(userId, OrderStatus.CART, pageable)
         
         return PaginatedResponse(
-            data = orderPage.content.map { it.toResponse(orderItemRepository, productServiceClient) },
+            data = orderPage.content.map { it.toResponse(orderItemRepository, kafkaRpcClient) },
             page = page,
             pageSize = pageSize,
             totalElements = orderPage.totalElements,
@@ -282,12 +282,12 @@ class OrderService(
      */
     private fun Order.toResponse(
         orderItemRepository: OrderItemRepository,
-        productServiceClient: ProductServiceClient
+        kafkaRpcClient: KafkaRpcClient
     ): OrderResponse {
         val items = orderItemRepository.findAllByOrderId(this.id)
             .map { item ->
                 try {
-                    val product = productServiceClient.getProductById(item.productId)
+                    val product = kafkaRpcClient.getProductById(item.productId)
                     OrderItemResponse(
                         id = item.id,
                         productId = item.productId,

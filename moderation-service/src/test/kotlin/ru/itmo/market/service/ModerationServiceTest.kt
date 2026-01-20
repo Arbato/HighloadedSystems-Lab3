@@ -12,8 +12,7 @@ import org.mockito.kotlin.verify
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
-import ru.itmo.market.client.ProductServiceClient
-import ru.itmo.market.client.UserServiceClient
+import ru.itmo.market.kafka.client.KafkaRpcClient
 import ru.itmo.market.exception.ForbiddenException
 import ru.itmo.market.model.dto.request.BulkModerationRequest
 import ru.itmo.market.model.dto.response.PaginatedResponse
@@ -32,10 +31,7 @@ import java.time.LocalDateTime
 class ModerationServiceTest {
 
     @Mock
-    private lateinit var productServiceClient: ProductServiceClient
-
-    @Mock
-    private lateinit var userServiceClient: UserServiceClient
+    private lateinit var kafkaRpcClient: KafkaRpcClient
 
     @Mock
     private lateinit var moderationActionRepository: ModerationActionRepository
@@ -95,8 +91,7 @@ class ModerationServiceTest {
     @BeforeEach
     fun setUp() {
         moderationService = ModerationService(
-            productServiceClient,
-            userServiceClient,
+            kafkaRpcClient,
             moderationActionRepository,
             moderationAuditRepository
         )
@@ -115,8 +110,8 @@ class ModerationServiceTest {
             pageSize = 20
         )
 
-        whenever(userServiceClient.getUserById(1L)).thenReturn(moderatorUser)
-        whenever(productServiceClient.getPendingProducts(1, 20)).thenReturn(paginatedResponse)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getPendingProducts(1, 20)).thenReturn(paginatedResponse)
 
         StepVerifier.create(moderationService.getPendingProducts(1L, 1, 20))
             .assertNext { response ->
@@ -138,8 +133,8 @@ class ModerationServiceTest {
             pageSize = 20
         )
 
-        whenever(userServiceClient.getUserById(2L)).thenReturn(adminUser)
-        whenever(productServiceClient.getPendingProducts(1, 20)).thenReturn(paginatedResponse)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(adminUser)
+        whenever(kafkaRpcClient.getPendingProducts(1, 20)).thenReturn(paginatedResponse)
 
         StepVerifier.create(moderationService.getPendingProducts(2L, 1, 20))
             .assertNext { response ->
@@ -152,7 +147,7 @@ class ModerationServiceTest {
     @Test
     @DisplayName("Should fail getting pending products for regular user")
     fun testGetPendingProductsForbidden() {
-        whenever(userServiceClient.getUserById(3L)).thenReturn(regularUser)
+        whenever(kafkaRpcClient.getUserById(3L)).thenReturn(regularUser)
 
         StepVerifier.create(moderationService.getPendingProducts(3L, 1, 20))
             .expectError(ForbiddenException::class.java)
@@ -164,8 +159,8 @@ class ModerationServiceTest {
     @Test
     @DisplayName("Should get pending product by ID for moderator")
     fun testGetPendingProductByIdSuccess() {
-        whenever(userServiceClient.getUserById(1L)).thenReturn(moderatorUser)
-        whenever(productServiceClient.getPendingProductById(100L)).thenReturn(testProduct)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getPendingProductById(100L)).thenReturn(testProduct)
 
         StepVerifier.create(moderationService.getPendingProductById(1L, 100L))
             .assertNext { product ->
@@ -179,7 +174,7 @@ class ModerationServiceTest {
     @Test
     @DisplayName("Should fail getting pending product for regular user")
     fun testGetPendingProductByIdForbidden() {
-        whenever(userServiceClient.getUserById(3L)).thenReturn(regularUser)
+        whenever(kafkaRpcClient.getUserById(3L)).thenReturn(regularUser)
 
         StepVerifier.create(moderationService.getPendingProductById(3L, 100L))
             .expectError(ForbiddenException::class.java)
@@ -208,8 +203,8 @@ class ModerationServiceTest {
             newStatus = "APPROVED"
         )
 
-        whenever(userServiceClient.getUserById(1L)).thenReturn(moderatorUser)
-        whenever(productServiceClient.approveProduct(100L, 1L)).thenReturn(approvedProduct)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.approveProduct(100L, 1L)).thenReturn(approvedProduct)
         whenever(moderationActionRepository.save(any<ModerationAction>())).thenReturn(Mono.just(savedAction))
         whenever(moderationAuditRepository.save(any<ModerationAudit>())).thenReturn(Mono.just(savedAudit))
 
@@ -226,7 +221,7 @@ class ModerationServiceTest {
     @Test
     @DisplayName("Should fail approving product for regular user")
     fun testApproveProductForbidden() {
-        whenever(userServiceClient.getUserById(3L)).thenReturn(regularUser)
+        whenever(kafkaRpcClient.getUserById(3L)).thenReturn(regularUser)
 
         StepVerifier.create(moderationService.approveProduct(3L, 100L))
             .expectError(ForbiddenException::class.java)
@@ -255,8 +250,8 @@ class ModerationServiceTest {
             newStatus = "REJECTED"
         )
 
-        whenever(userServiceClient.getUserById(1L)).thenReturn(moderatorUser)
-        whenever(productServiceClient.rejectProduct(100L, 1L, "Low quality")).thenReturn(rejectedProduct)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.rejectProduct(100L, 1L, "Low quality")).thenReturn(rejectedProduct)
         whenever(moderationActionRepository.save(any<ModerationAction>())).thenReturn(Mono.just(savedAction))
         whenever(moderationAuditRepository.save(any<ModerationAudit>())).thenReturn(Mono.just(savedAudit))
 
@@ -274,7 +269,7 @@ class ModerationServiceTest {
     @Test
     @DisplayName("Should fail rejecting product for regular user")
     fun testRejectProductForbidden() {
-        whenever(userServiceClient.getUserById(3L)).thenReturn(regularUser)
+        whenever(kafkaRpcClient.getUserById(3L)).thenReturn(regularUser)
 
         StepVerifier.create(moderationService.rejectProduct(3L, 100L, "Bad"))
             .expectError(ForbiddenException::class.java)
@@ -369,9 +364,9 @@ class ModerationServiceTest {
         val savedAudit1 = ModerationAudit(id = 1L, actionId = 1L, productId = 100L, moderatorId = 1L, oldStatus = "PENDING", newStatus = "APPROVED")
         val savedAudit2 = ModerationAudit(id = 2L, actionId = 2L, productId = 101L, moderatorId = 1L, oldStatus = "PENDING", newStatus = "APPROVED")
 
-        whenever(userServiceClient.getUserById(1L)).thenReturn(moderatorUser)
-        whenever(productServiceClient.approveProduct(100L, 1L)).thenReturn(approvedProduct1)
-        whenever(productServiceClient.approveProduct(101L, 1L)).thenReturn(approvedProduct2)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.approveProduct(100L, 1L)).thenReturn(approvedProduct1)
+        whenever(kafkaRpcClient.approveProduct(101L, 1L)).thenReturn(approvedProduct2)
         whenever(moderationActionRepository.save(any<ModerationAction>()))
             .thenReturn(Mono.just(savedAction1))
             .thenReturn(Mono.just(savedAction2))
@@ -409,9 +404,9 @@ class ModerationServiceTest {
         val savedAudit1 = ModerationAudit(id = 1L, actionId = 1L, productId = 100L, moderatorId = 1L, oldStatus = "PENDING", newStatus = "REJECTED")
         val savedAudit2 = ModerationAudit(id = 2L, actionId = 2L, productId = 101L, moderatorId = 1L, oldStatus = "PENDING", newStatus = "REJECTED")
 
-        whenever(userServiceClient.getUserById(1L)).thenReturn(moderatorUser)
-        whenever(productServiceClient.rejectProduct(100L, 1L, "Low quality")).thenReturn(rejectedProduct1)
-        whenever(productServiceClient.rejectProduct(101L, 1L, "Low quality")).thenReturn(rejectedProduct2)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.rejectProduct(100L, 1L, "Low quality")).thenReturn(rejectedProduct1)
+        whenever(kafkaRpcClient.rejectProduct(101L, 1L, "Low quality")).thenReturn(rejectedProduct2)
         whenever(moderationActionRepository.save(any<ModerationAction>()))
             .thenReturn(Mono.just(savedAction1))
             .thenReturn(Mono.just(savedAction2))
@@ -447,8 +442,8 @@ class ModerationServiceTest {
         val savedAction = ModerationAction(id = 1L, productId = 100L, moderatorId = 1L, actionType = "REJECT", reason = "No reason provided")
         val savedAudit = ModerationAudit(id = 1L, actionId = 1L, productId = 100L, moderatorId = 1L, oldStatus = "PENDING", newStatus = "REJECTED")
 
-        whenever(userServiceClient.getUserById(1L)).thenReturn(moderatorUser)
-        whenever(productServiceClient.rejectProduct(100L, 1L, "No reason provided")).thenReturn(rejectedProduct)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.rejectProduct(100L, 1L, "No reason provided")).thenReturn(rejectedProduct)
         whenever(moderationActionRepository.save(any<ModerationAction>())).thenReturn(Mono.just(savedAction))
         whenever(moderationAuditRepository.save(any<ModerationAudit>())).thenReturn(Mono.just(savedAudit))
 
@@ -470,7 +465,7 @@ class ModerationServiceTest {
             reason = null
         )
 
-        whenever(userServiceClient.getUserById(3L)).thenReturn(regularUser)
+        whenever(kafkaRpcClient.getUserById(3L)).thenReturn(regularUser)
 
         StepVerifier.create(moderationService.bulkModerate(3L, request))
             .expectError(ForbiddenException::class.java)
@@ -482,8 +477,8 @@ class ModerationServiceTest {
     @Test
     @DisplayName("Should get pending product by ID for admin")
     fun testGetPendingProductByIdForAdmin() {
-        whenever(userServiceClient.getUserById(2L)).thenReturn(adminUser)
-        whenever(productServiceClient.getPendingProductById(100L)).thenReturn(testProduct)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(adminUser)
+        whenever(kafkaRpcClient.getPendingProductById(100L)).thenReturn(testProduct)
 
         StepVerifier.create(moderationService.getPendingProductById(2L, 100L))
             .assertNext { product ->
@@ -500,8 +495,8 @@ class ModerationServiceTest {
         val savedAction = ModerationAction(id = 1L, productId = 100L, moderatorId = 2L, actionType = "APPROVE")
         val savedAudit = ModerationAudit(id = 1L, actionId = 1L, productId = 100L, moderatorId = 2L, oldStatus = "PENDING", newStatus = "APPROVED")
 
-        whenever(userServiceClient.getUserById(2L)).thenReturn(adminUser)
-        whenever(productServiceClient.approveProduct(100L, 2L)).thenReturn(approvedProduct)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(adminUser)
+        whenever(kafkaRpcClient.approveProduct(100L, 2L)).thenReturn(approvedProduct)
         whenever(moderationActionRepository.save(any<ModerationAction>())).thenReturn(Mono.just(savedAction))
         whenever(moderationAuditRepository.save(any<ModerationAudit>())).thenReturn(Mono.just(savedAudit))
 
@@ -521,8 +516,8 @@ class ModerationServiceTest {
         val savedAction = ModerationAction(id = 1L, productId = 100L, moderatorId = 2L, actionType = "REJECT", reason = "Policy violation")
         val savedAudit = ModerationAudit(id = 1L, actionId = 1L, productId = 100L, moderatorId = 2L, oldStatus = "PENDING", newStatus = "REJECTED")
 
-        whenever(userServiceClient.getUserById(2L)).thenReturn(adminUser)
-        whenever(productServiceClient.rejectProduct(100L, 2L, "Policy violation")).thenReturn(rejectedProduct)
+        whenever(kafkaRpcClient.getUserById(2L)).thenReturn(adminUser)
+        whenever(kafkaRpcClient.rejectProduct(100L, 2L, "Policy violation")).thenReturn(rejectedProduct)
         whenever(moderationActionRepository.save(any<ModerationAction>())).thenReturn(Mono.just(savedAction))
         whenever(moderationAuditRepository.save(any<ModerationAudit>())).thenReturn(Mono.just(savedAudit))
 
@@ -547,8 +542,8 @@ class ModerationServiceTest {
             pageSize = 20
         )
 
-        whenever(userServiceClient.getUserById(1L)).thenReturn(moderatorUser)
-        whenever(productServiceClient.getPendingProducts(2, 20)).thenReturn(paginatedResponse)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getPendingProducts(2, 20)).thenReturn(paginatedResponse)
 
         StepVerifier.create(moderationService.getPendingProducts(1L, 2, 20))
             .assertNext { response ->
@@ -571,8 +566,8 @@ class ModerationServiceTest {
             pageSize = 20
         )
 
-        whenever(userServiceClient.getUserById(1L)).thenReturn(moderatorUser)
-        whenever(productServiceClient.getPendingProducts(1, 20)).thenReturn(paginatedResponse)
+        whenever(kafkaRpcClient.getUserById(1L)).thenReturn(moderatorUser)
+        whenever(kafkaRpcClient.getPendingProducts(1, 20)).thenReturn(paginatedResponse)
 
         StepVerifier.create(moderationService.getPendingProducts(1L, 1, 20))
             .assertNext { response ->

@@ -4,6 +4,20 @@ server:
     context-path: /
 
 spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092,kafka-2:9093,kafka-3:9094}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      retries: 3
+    consumer:
+      bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092,kafka-2:9093,kafka-3:9094}
+      group-id: moderation-service-rpc-replies
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+
   r2dbc:
     url: r2dbc:postgresql://${DB_HOST:postgres-moderation}:${DB_PORT:5432}/${DB_NAME:itmomarket_moderation}
     username: ${DB_USER:itmouser}

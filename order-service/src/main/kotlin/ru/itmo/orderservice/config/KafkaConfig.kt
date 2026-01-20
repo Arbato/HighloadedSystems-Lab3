@@ -1,4 +1,4 @@
-package ru.itmo.productservice.config
+package ru.itmo.orderservice.config
 
 import org.apache.kafka.clients.admin.AdminClientConfig
 import org.apache.kafka.clients.admin.NewTopic
@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.core.KafkaAdmin
-
 
 @Configuration
 @EnableKafka
@@ -26,16 +25,6 @@ class KafkaConfig(
     }
 
     @Bean
-    fun userServiceRequestsTopic(): NewTopic {
-        return NewTopic("user-service-requests", 3, 3.toShort())
-    }
-
-    @Bean
-    fun productServiceRepliesTopic(): NewTopic {
-        return NewTopic("product-service-replies", 3, 3.toShort())
-    }
-
-    @Bean
     fun productServiceRequestsTopic(): NewTopic {
         return NewTopic("product-service-requests", 3, 3.toShort())
     }
@@ -43,10 +32,5 @@ class KafkaConfig(
     @Bean
     fun orderServiceRepliesTopic(): NewTopic {
         return NewTopic("order-service-replies", 3, 3.toShort())
-    }
-
-    @Bean
-    fun moderationServiceRepliesTopic(): NewTopic {
-        return NewTopic("moderation-service-replies", 3, 3.toShort())
     }
 }

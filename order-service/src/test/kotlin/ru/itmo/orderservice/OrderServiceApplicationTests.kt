@@ -11,7 +11,8 @@ import org.springframework.test.context.TestPropertySource
 @TestPropertySource(properties = [
     "spring.cloud.config.enabled=false",
     "spring.cloud.config.import-check.enabled=false",
-    "eureka.client.enabled=false"
+    "eureka.client.enabled=false",
+    "spring.kafka.enabled=false"
 ])
 @DisplayName("Application Context Tests")
 class OrderServiceApplicationTests {
