@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 
 @Component
 class KafkaRpcClient(
-    private val kafkaTemplate: KafkaTemplate<String, Any>,
+    private val kafkaTemplate: KafkaTemplate<String, String>,
     private val objectMapper: ObjectMapper
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -47,9 +47,11 @@ class KafkaRpcClient(
         pendingRequests[requestId] = pendingRequest
         
         try {
+
+            val requestJson = objectMapper.writeValueAsString(request)
             
-            val message: Message<UserServiceRequest> = MessageBuilder
-                .withPayload(request)
+            val message: Message<String> = MessageBuilder
+                .withPayload(requestJson)
                 .setHeader(KafkaHeaders.TOPIC, "user-service-requests")
                 .setHeader("requestId", requestId)
                 .setHeader("replyTopic", PRODUCT_SERVICE_REPLY_TOPIC)

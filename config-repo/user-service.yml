@@ -6,6 +6,26 @@ server:
 spring:
   kafka:
     bootstrap-servers: kafka:9092
+    
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.info: false  # ← ОТКЛЮЧИТЬ metadata
+      acks: all
+      retries: 3
+    
+    consumer:
+      bootstrap-servers: kafka:9092
+      group-id: user-service-request-processor
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer  # ← JSON!
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.info.headers: false  # ← ОТКЛЮЧИТЬ metadata
+      auto-offset-reset: earliest
+      enable-auto-commit: false  # Manual ack
+      max-poll-records: 100
 
   r2dbc:
     url: r2dbc:postgresql://${DB_HOST:postgres-user}:${DB_PORT:5432}/${DB_NAME:itmomarket_user}
