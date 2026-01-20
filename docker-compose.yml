@@ -16,7 +16,7 @@ services:
     networks:
       - itmo-network
     healthcheck:
-      test: [ "CMD", "echo", "ruok", "|", "nc", "localhost", "2181" ]
+      test: [ "CMD-SHELL", "echo ruok | nc localhost 2181" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,10 +42,11 @@ services:
     networks:
       - itmo-network
     healthcheck:
-      test: [ "CMD", "kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092" ]
-      interval: 10s
+      test: [ "CMD", "nc", "-z", "localhost", "9092" ]
+      interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 40s
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -59,7 +60,7 @@ services:
     ports:
       - "2183:8080"
     networks:
-      - itmomarket
+      - itmo-network
   
   eureka-server:
     build:
@@ -240,6 +241,8 @@ services:
         condition: service_healthy
       postgres-user:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
     networks:
       - itmo-network
     healthcheck:
@@ -278,6 +281,8 @@ services:
       postgres-product:
         condition: service_healthy
       user-service:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     networks:
       - itmo-network
@@ -320,6 +325,8 @@ services:
         condition: service_healthy
       user-service:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
     networks:
       - itmo-network
     healthcheck:
@@ -360,6 +367,8 @@ services:
       user-service:
         condition: service_healthy
       gateway-service:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     networks:
       - itmo-network
