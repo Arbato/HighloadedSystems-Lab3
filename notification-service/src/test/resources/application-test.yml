@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: notification-service-test
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+  kafka:
+    enabled: false
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  r2dbc:
+    url: r2dbc:h2:mem:///testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  flyway:
+    enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+logging:
+  level:
+    root: WARN
+    ru.itmo.notificationservice: DEBUG

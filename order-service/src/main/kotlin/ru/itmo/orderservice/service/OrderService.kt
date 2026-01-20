@@ -22,7 +22,8 @@ import java.time.LocalDateTime
 class OrderService(
     private val orderRepository: OrderRepository,
     private val orderItemRepository: OrderItemRepository,
-    private val kafkaRpcClient: KafkaRpcClient
+    private val kafkaRpcClient: KafkaRpcClient,
+    private val orderEventProducer: ru.itmo.orderservice.kafka.producer.OrderEventProducer? = null
 ) {
     
     /**
@@ -231,11 +232,19 @@ class OrderService(
         )
         
         val savedOrder = orderRepository.save(order)
-        
+
+        // Публикуем событие о создании заказа
+        orderEventProducer?.publishOrderCreated(
+            orderId = savedOrder.id,
+            userId = userId,
+            totalPrice = savedOrder.totalPrice,
+            itemsCount = items.size
+        )
+
         // Создаем новую пустую корзину
         val newCart = Order(userId = userId, status = OrderStatus.CART)
         orderRepository.save(newCart)
-        
+
         return savedOrder.toResponse(orderItemRepository, kafkaRpcClient)
     }
     

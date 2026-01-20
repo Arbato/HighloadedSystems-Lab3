@@ -23,7 +23,8 @@ import java.time.LocalDateTime
 class ModerationService(
     private val kafkaRpcClient: KafkaRpcClient,
     private val moderationActionRepository: ModerationActionRepository,
-    private val moderationAuditRepository: ModerationAuditRepository
+    private val moderationAuditRepository: ModerationAuditRepository,
+    private val moderationEventProducer: ru.itmo.market.kafka.producer.ModerationEventProducer? = null
 ) {
     
     private val logger = LoggerFactory.getLogger(ModerationService::class.java)
@@ -82,6 +83,13 @@ class ModerationService(
                             )
                             moderationAuditRepository.save(audit)
                                 .map {
+                                    // Публикуем событие об одобрении продукта
+                                    moderationEventProducer?.publishProductApproved(
+                                        productId = productId,
+                                        productName = product.name,
+                                        sellerId = product.sellerId,
+                                        moderatorId = moderatorId
+                                    )
                                     ModerationResultResponse(
                                         productId = productId,
                                         productName = product.name,
@@ -97,7 +105,7 @@ class ModerationService(
                 .doOnSuccess { logger.info("Product $productId approved by moderator $moderatorId") }
             }
     }
-    
+
     @Transactional
     fun rejectProduct(moderatorId: Long, productId: Long, reason: String): Mono<ModerationResultResponse> {
         return verifyModerator(moderatorId)
@@ -128,6 +136,14 @@ class ModerationService(
                             )
                             moderationAuditRepository.save(audit)
                                 .map {
+                                    // Публикуем событие об отклонении продукта
+                                    moderationEventProducer?.publishProductRejected(
+                                        productId = productId,
+                                        productName = product.name,
+                                        sellerId = product.sellerId,
+                                        moderatorId = moderatorId,
+                                        reason = reason
+                                    )
                                     ModerationResultResponse(
                                         productId = productId,
                                         productName = product.name,
@@ -143,7 +159,7 @@ class ModerationService(
                 .doOnSuccess { logger.info("Product $productId rejected by moderator $moderatorId") }
             }
     }
-    
+
     // ========== BULK ОПЕРАЦИИ ==========
     
     @Transactional

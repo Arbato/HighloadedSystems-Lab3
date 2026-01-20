@@ -38,4 +38,9 @@ class KafkaConfig(
     fun moderationServiceRepliesTopic(): NewTopic {
         return NewTopic("moderation-service-replies", 3, 3.toShort())
     }
+
+    @Bean
+    fun moderationEventsTopic(): NewTopic {
+        return NewTopic("moderation-events", 3, 3.toShort())
+    }
 }

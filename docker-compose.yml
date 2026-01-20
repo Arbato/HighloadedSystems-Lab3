@@ -269,6 +269,25 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres-notification:
+    image: postgres:15-alpine
+    container_name: postgres-notification
+    environment:
+      POSTGRES_USER: itmouser
+      POSTGRES_PASSWORD: itmopassword
+      POSTGRES_DB: itmomarket_notification
+    volumes:
+      - postgres_notification_data:/var/lib/postgresql/data
+    ports:
+      - "5405:5432"
+    networks:
+      - itmo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U itmouser -d itmomarket_notification"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   adminer:
     image: adminer:latest
     container_name: adminer
@@ -282,6 +301,8 @@ services:
       postgres-order:
         condition: service_healthy
       postgres-moderation:
+        condition: service_healthy
+      postgres-notification:
         condition: service_healthy
     networks:
       - itmo-network
@@ -526,6 +547,50 @@ services:
       retries: 3
       start_period: 60s
 
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    ports:
+      - "0:8080"  # RANDOM port
+    environment:
+      - SERVER_PORT=8080
+      - DB_HOST=postgres-notification
+      - DB_PORT=5432
+      - DB_NAME=itmomarket_notification
+      - DB_USER=itmouser
+      - DB_PASSWORD=itmopassword
+      - CONFIG_SERVER_HOST=config-server
+      - CONFIG_SERVER_PORT=8888
+      - EUREKA_HOST=eureka-server
+      - EUREKA_PORT=8761
+      - SPRING_PROFILES_ACTIVE=docker
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092,kafka-2:9093,kafka-3:9094
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      gateway-service:
+        condition: service_healthy
+      postgres-notification:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      kafka-3:
+        condition: service_healthy
+    networks:
+      - itmo-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   gateway-service:
     build:
       context: ./gateway-service
@@ -564,4 +629,5 @@ volumes:
   postgres_product_data:
   postgres_order_data:
   postgres_moderation_data:
+  postgres_notification_data:
   minio_data:

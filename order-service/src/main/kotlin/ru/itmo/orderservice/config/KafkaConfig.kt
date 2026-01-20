@@ -33,4 +33,9 @@ class KafkaConfig(
     fun orderServiceRepliesTopic(): NewTopic {
         return NewTopic("order-service-replies", 3, 3.toShort())
     }
+
+    @Bean
+    fun orderEventsTopic(): NewTopic {
+        return NewTopic("order-events", 3, 3.toShort())
+    }
 }
