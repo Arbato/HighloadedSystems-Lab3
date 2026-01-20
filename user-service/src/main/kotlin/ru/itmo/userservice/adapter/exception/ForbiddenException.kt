@@ -1,0 +1,3 @@
+package ru.itmo.userservice.adapter.exception
+
+class ForbiddenException(message: String) : RuntimeException(message)
