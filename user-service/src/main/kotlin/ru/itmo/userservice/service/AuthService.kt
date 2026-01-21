@@ -89,7 +89,7 @@ class AuthService(
                             roles = roles.toSet()
                         )
                         val userResponse = UserResponse(
-                            id = user.id,
+                            id = userId,
                             username = user.username,
                             email = user.email,
                             firstName = user.firstName,
@@ -100,7 +100,7 @@ class AuthService(
                         )
                         
                         userEventPublisher.publishUserRegistered(userResponse)
-                        
+
                         AuthResponse(
                             token = token,
                             userId = userId,
