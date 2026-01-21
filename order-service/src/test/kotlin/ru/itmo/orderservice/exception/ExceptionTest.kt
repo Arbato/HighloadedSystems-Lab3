@@ -2,6 +2,11 @@ package ru.itmo.orderservice.exception
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
+import ru.itmo.orderservice.adapters.exception.BadRequestException
+import ru.itmo.orderservice.adapters.exception.ConflictException
+import ru.itmo.orderservice.adapters.exception.ForbiddenException
+import ru.itmo.orderservice.adapters.exception.ResourceNotFoundException
+import ru.itmo.orderservice.adapters.exception.ServiceUnavailableException
 
 @DisplayName("Exception Tests")
 class ExceptionTest {
