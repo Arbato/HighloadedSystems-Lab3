@@ -12,15 +12,17 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.containers.PostgreSQLContainer
 import reactor.test.StepVerifier
-import ru.itmo.userservice.exception.BadRequestException
-import ru.itmo.userservice.exception.ConflictException
-import ru.itmo.userservice.exception.ForbiddenException
-import ru.itmo.userservice.exception.ResourceNotFoundException
-import ru.itmo.userservice.model.dto.request.RegisterRequest
-import ru.itmo.userservice.model.dto.request.UpdateProfileRequest
-import ru.itmo.userservice.model.enums.UserRole
-import ru.itmo.userservice.repository.UserRepository
-import ru.itmo.userservice.repository.UserRoleRepository
+import ru.itmo.userservice.adapters.exception.BadRequestException
+import ru.itmo.userservice.adapters.exception.ConflictException
+import ru.itmo.userservice.adapters.exception.ForbiddenException
+import ru.itmo.userservice.adapters.exception.ResourceNotFoundException
+import ru.itmo.userservice.application.dto.request.RegisterRequest
+import ru.itmo.userservice.application.dto.request.UpdateProfileRequest
+import ru.itmo.userservice.application.service.AuthService
+import ru.itmo.userservice.application.service.UserService
+import ru.itmo.userservice.domain.enums.UserRole
+import ru.itmo.userservice.infrastructure.repository.UserRepository
+import ru.itmo.userservice.infrastructure.repository.UserRoleRepository
 import java.time.Duration
 
 @SpringBootTest

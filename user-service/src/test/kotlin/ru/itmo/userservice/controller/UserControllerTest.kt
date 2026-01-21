@@ -15,14 +15,14 @@ import org.springframework.http.MediaType
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.containers.PostgreSQLContainer
-import ru.itmo.userservice.model.dto.request.RegisterRequest
-import ru.itmo.userservice.model.dto.request.UpdateProfileRequest
-import ru.itmo.userservice.model.dto.response.AuthResponse
-import ru.itmo.userservice.model.enums.UserRole
-import ru.itmo.userservice.repository.UserRepository
-import ru.itmo.userservice.repository.UserRoleRepository
-import ru.itmo.userservice.service.AuthService
-import ru.itmo.userservice.service.UserService
+import ru.itmo.userservice.application.dto.request.RegisterRequest
+import ru.itmo.userservice.application.dto.request.UpdateProfileRequest
+import ru.itmo.userservice.application.dto.response.AuthResponse
+import ru.itmo.userservice.domain.enums.UserRole
+import ru.itmo.userservice.infrastructure.repository.UserRepository
+import ru.itmo.userservice.infrastructure.repository.UserRoleRepository
+import ru.itmo.userservice.application.service.AuthService
+import ru.itmo.userservice.application.service.UserService
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient

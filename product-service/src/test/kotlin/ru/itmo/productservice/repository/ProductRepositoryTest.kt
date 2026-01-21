@@ -9,9 +9,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
 import org.springframework.data.domain.PageRequest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestPropertySource
-import ru.itmo.productservice.model.entity.Product
-import ru.itmo.productservice.model.entity.Shop
-import ru.itmo.productservice.model.enums.ProductStatus
+import ru.itmo.productservice.domain.entity.Product
+import ru.itmo.productservice.domain.entity.Shop
+import ru.itmo.productservice.domain.enums.ProductStatus
+import ru.itmo.productservice.infrastructure.repository.ProductRepository
+import ru.itmo.productservice.infrastructure.repository.ShopRepository
 import java.math.BigDecimal
 
 @DataJpaTest

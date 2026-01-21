@@ -19,7 +19,7 @@ class KafkaTopicsConfig(
     @Value("\${kafka.topics.partitions:3}")
     private val partitions: Int,
 
-    @Value("\${kafka.topics.replication-factor:1}")
+    @Value("\${kafka.topics.replication-factor:3}")
     private val replicationFactor: Short
 ) {
 

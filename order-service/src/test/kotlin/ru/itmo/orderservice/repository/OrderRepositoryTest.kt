@@ -9,9 +9,10 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
 import org.springframework.data.domain.PageRequest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.TestPropertySource
-import ru.itmo.orderservice.model.entity.Order
-import ru.itmo.orderservice.model.entity.OrderItem
-import ru.itmo.orderservice.model.enums.OrderStatus
+import ru.itmo.orderservice.domain.entity.Order
+import ru.itmo.orderservice.domain.enums.OrderStatus
+import ru.itmo.orderservice.infrastructure.repository.OrderItemRepository
+import ru.itmo.orderservice.infrastructure.repository.OrderRepository
 import java.math.BigDecimal
 
 @DataJpaTest

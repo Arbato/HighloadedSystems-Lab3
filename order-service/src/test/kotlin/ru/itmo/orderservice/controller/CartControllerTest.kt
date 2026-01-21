@@ -13,13 +13,15 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import ru.itmo.orderservice.exception.BadRequestException
-import ru.itmo.orderservice.exception.ResourceNotFoundException
-import ru.itmo.orderservice.model.dto.request.AddToCartRequest
-import ru.itmo.orderservice.model.dto.request.UpdateQuantityRequest
-import ru.itmo.orderservice.model.dto.response.OrderItemResponse
-import ru.itmo.orderservice.model.dto.response.OrderResponse
-import ru.itmo.orderservice.service.OrderService
+import ru.itmo.orderservice.adapters.exception.BadRequestException
+import ru.itmo.orderservice.adapters.exception.ResourceNotFoundException
+import ru.itmo.orderservice.application.dto.request.AddToCartRequest
+import ru.itmo.orderservice.application.dto.request.UpdateQuantityRequest
+import ru.itmo.orderservice.application.dto.response.OrderItemResponse
+import ru.itmo.orderservice.application.dto.response.OrderResponse
+import ru.itmo.orderservice.application.service.OrderService
+import ru.itmo.orderservice.presentation.adapter.exception.GlobalExceptionHandler
+import ru.itmo.orderservice.presentation.controller.CartController
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -29,7 +31,7 @@ import java.time.LocalDateTime
     "spring.cloud.config.enabled=false",
     "eureka.client.enabled=false"
 ])
-@org.springframework.context.annotation.Import(ru.itmo.orderservice.exception.GlobalExceptionHandler::class)
+@org.springframework.context.annotation.Import(GlobalExceptionHandler::class)
 @DisplayName("CartController Tests")
 class CartControllerTest {
 

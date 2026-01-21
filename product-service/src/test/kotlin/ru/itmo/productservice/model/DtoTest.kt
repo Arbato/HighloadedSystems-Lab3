@@ -2,14 +2,14 @@ package ru.itmo.productservice.model
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
-import ru.itmo.productservice.model.dto.request.CreateProductRequest
-import ru.itmo.productservice.model.dto.request.CreateShopRequest
-import ru.itmo.productservice.model.dto.request.UpdateProductRequest
-import ru.itmo.productservice.model.dto.request.UpdateShopRequest
-import ru.itmo.productservice.model.dto.response.PaginatedResponse
-import ru.itmo.productservice.model.dto.response.ProductResponse
-import ru.itmo.productservice.model.dto.response.ShopResponse
-import ru.itmo.productservice.model.dto.response.UserResponse
+import ru.itmo.productservice.application.dto.request.CreateProductRequest
+import ru.itmo.productservice.application.dto.request.CreateShopRequest
+import ru.itmo.productservice.application.dto.request.UpdateProductRequest
+import ru.itmo.productservice.application.dto.request.UpdateShopRequest
+import ru.itmo.productservice.application.dto.response.PaginatedResponse
+import ru.itmo.productservice.application.dto.response.ProductResponse
+import ru.itmo.productservice.application.dto.response.ShopResponse
+import ru.itmo.productservice.application.dto.response.UserResponse
 import java.math.BigDecimal
 import java.time.LocalDateTime
 

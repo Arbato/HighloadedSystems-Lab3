@@ -2,9 +2,9 @@ package ru.itmo.productservice.model
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
-import ru.itmo.productservice.model.entity.Product
-import ru.itmo.productservice.model.entity.Shop
-import ru.itmo.productservice.model.enums.ProductStatus
+import ru.itmo.productservice.domain.entity.Product
+import ru.itmo.productservice.domain.entity.Shop
+import ru.itmo.productservice.domain.enums.ProductStatus
 import java.math.BigDecimal
 import java.time.LocalDateTime
 

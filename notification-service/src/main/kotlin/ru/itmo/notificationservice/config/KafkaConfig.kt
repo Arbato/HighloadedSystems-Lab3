@@ -11,7 +11,7 @@ import org.springframework.kafka.core.KafkaAdmin
 @Configuration
 @EnableKafka
 class KafkaConfig(
-    @Value("\${spring.kafka.bootstrap-servers:kafka-1:9092,kafka-2:9093,kafka-3:9094}")
+    @Value("\${spring.kafka.bootstrap-servers:kafka:9092,kafka-2:9093,kafka-3:9094}")
     private val bootstrapServers: String
 ) {
 

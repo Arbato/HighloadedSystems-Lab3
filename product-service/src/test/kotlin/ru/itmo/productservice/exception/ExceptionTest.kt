@@ -3,6 +3,10 @@ package ru.itmo.productservice.exception
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.assertThrows
+import ru.itmo.productservice.adapters.exception.BadRequestException
+import ru.itmo.productservice.adapters.exception.ForbiddenException
+import ru.itmo.productservice.adapters.exception.ResourceNotFoundException
+import ru.itmo.productservice.adapters.exception.ServiceUnavailableException
 
 @DisplayName("Exception Tests")
 class ExceptionTest {

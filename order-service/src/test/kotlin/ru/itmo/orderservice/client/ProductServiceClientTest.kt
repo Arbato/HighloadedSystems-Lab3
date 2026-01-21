@@ -3,7 +3,8 @@ package ru.itmo.orderservice.client
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.assertThrows
-import ru.itmo.orderservice.exception.ServiceUnavailableException
+import ru.itmo.orderservice.adapters.exception.ServiceUnavailableException
+import ru.itmo.orderservice.infrastructure.client.ProductServiceClientFallback
 
 @DisplayName("ProductServiceClient Tests")
 class ProductServiceClientTest {
