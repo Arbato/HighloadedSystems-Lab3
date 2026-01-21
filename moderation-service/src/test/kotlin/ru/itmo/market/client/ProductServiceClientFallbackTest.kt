@@ -3,7 +3,8 @@ package ru.itmo.market.client
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.assertThrows
-import ru.itmo.market.exception.ServiceUnavailableException
+import ru.itmo.market.adapters.exception.ServiceUnavailableException
+import ru.itmo.market.infrastructure.client.ProductServiceClientFallback
 
 @DisplayName("ProductServiceClientFallback Tests")
 class ProductServiceClientFallbackTest {

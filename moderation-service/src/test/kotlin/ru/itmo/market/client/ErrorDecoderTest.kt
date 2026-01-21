@@ -5,9 +5,11 @@ import feign.Response
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.BeforeEach
-import ru.itmo.market.exception.BadRequestException
-import ru.itmo.market.exception.ResourceNotFoundException
-import ru.itmo.market.exception.ServiceUnavailableException
+import ru.itmo.market.adapters.exception.BadRequestException
+import ru.itmo.market.adapters.exception.ResourceNotFoundException
+import ru.itmo.market.adapters.exception.ServiceUnavailableException
+import ru.itmo.market.infrastructure.client.ProductServiceFeignConfig
+import ru.itmo.market.infrastructure.client.UserServiceFeignConfig
 import java.nio.charset.StandardCharsets
 
 @DisplayName("Error Decoder Tests")

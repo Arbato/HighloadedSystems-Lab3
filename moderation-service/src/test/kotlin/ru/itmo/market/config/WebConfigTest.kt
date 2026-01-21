@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest
 import org.springframework.mock.web.server.MockServerWebExchange
+import ru.itmo.market.infrastructure.config.WebConfig
 
 @DisplayName("WebConfig Tests")
 class WebConfigTest {

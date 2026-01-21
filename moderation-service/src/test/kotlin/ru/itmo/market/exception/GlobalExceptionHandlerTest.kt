@@ -4,6 +4,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.http.HttpStatus
+import ru.itmo.market.adapters.exception.BadRequestException
+import ru.itmo.market.adapters.exception.ForbiddenException
+import ru.itmo.market.adapters.exception.ResourceNotFoundException
+import ru.itmo.market.adapters.exception.ServiceUnavailableException
+import ru.itmo.market.presentation.adapter.exception.GlobalExceptionHandler
 
 @DisplayName("GlobalExceptionHandler Tests")
 class GlobalExceptionHandlerTest {
