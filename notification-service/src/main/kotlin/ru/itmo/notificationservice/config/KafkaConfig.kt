@@ -30,6 +30,17 @@ class KafkaConfig(
         return NewTopic("user-events", 1, 3.toShort())
     }
 
+    @Bean
+    fun productEventsTopic(): NewTopic {
+        return NewTopic("product-events", 1, 3.toShort())
+    }
+
+    @Bean
+    fun orderEventsTopic(): NewTopic {
+        return NewTopic("order-events", 1, 3.toShort())
+    }
+
+
     /**
      * Топик для команд отправки уведомлений (3 реплики)
      */

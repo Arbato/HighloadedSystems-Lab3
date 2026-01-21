@@ -14,7 +14,7 @@ import ru.itmo.notificationservice.service.application.UserNotificationUseCase
 import java.time.Duration
 
 @Component
-class NotificationEventConsumer(
+class UserNotificationEventConsumer(
     private val userNotificationUseCase: UserNotificationUseCase,
     private val objectMapper: ObjectMapper
 ) {
