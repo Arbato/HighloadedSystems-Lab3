@@ -4,7 +4,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient
-import ru.itmo.userservice.config.JwtProperties
+import ru.itmo.userservice.infrastructure.config.JwtProperties
 
 @SpringBootApplication
 @EnableDiscoveryClient

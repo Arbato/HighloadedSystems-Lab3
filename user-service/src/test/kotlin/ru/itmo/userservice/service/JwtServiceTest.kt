@@ -4,7 +4,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Assertions.*
-import ru.itmo.userservice.config.JwtProperties
+import ru.itmo.userservice.application.service.JwtService
+import ru.itmo.userservice.infrastructure.config.JwtProperties
 
 @DisplayName("JWT Service Tests")
 class JwtServiceTest {
