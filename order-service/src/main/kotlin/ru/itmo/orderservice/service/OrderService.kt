@@ -16,6 +16,7 @@ import ru.itmo.orderservice.model.entity.OrderItem
 import ru.itmo.orderservice.model.enums.OrderStatus
 import ru.itmo.orderservice.repository.OrderRepository
 import ru.itmo.orderservice.repository.OrderItemRepository
+import ru.itmo.orderservice.kafka.publisher.OrderEventPublisher
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -23,26 +24,27 @@ import java.time.LocalDateTime
 class OrderService(
     private val orderRepository: OrderRepository,
     private val orderItemRepository: OrderItemRepository,
-    private val kafkaRpcClient: KafkaRpcClient
+    private val kafkaRpcClient: KafkaRpcClient,
+    private val orderEventPublisher: OrderEventPublisher
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
 
     private fun validateUser(userId: Long) {
-    if (userId <= 0) {
-        throw BadRequestException("Invalid user ID: $userId")
+        if (userId <= 0) {
+            throw BadRequestException("Invalid user ID: $userId")
+        }
+        
+        try {
+            logger.debug("Validating user: $userId")
+            val user = kafkaRpcClient.getUserById(userId)
+            logger.debug("User $userId validated successfully")
+        } catch (e: ResourceNotFoundException) {
+            throw e
+        } catch (e: Exception) {
+            logger.error("Error validating user $userId", e)
+            throw e
+        }
     }
-    
-    try {
-        logger.debug("Validating user: $userId")
-        val user = kafkaRpcClient.getUserById(userId)
-        logger.debug("User $userId validated successfully")
-    } catch (e: ResourceNotFoundException) {
-        throw e
-    } catch (e: Exception) {
-        logger.error("Error validating user $userId", e)
-        throw e
-    }
-}
 
     
     fun getCart(userId: Long): OrderResponse {
@@ -88,6 +90,7 @@ class OrderService(
             val item = existingItem.get()
             val updatedItem = item.copy(quantity = item.quantity + quantity)
             orderItemRepository.save(updatedItem)
+            orderEventPublisher.publishCartItemUpdated(cart.id, userId, existingItem.get().id, updatedItem.quantity)
             logger.debug("Updated existing cart item: $productId (new quantity: ${updatedItem.quantity})")
         } else {
             val newItem = OrderItem(
@@ -151,6 +154,7 @@ class OrderService(
         orderRepository.save(updatedCart)
         
         logger.info("Cart item updated for user $userId")
+        orderEventPublisher.publishCartItemUpdated(cart.id, userId, itemId, quantity)
         return updatedCart.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
@@ -183,6 +187,7 @@ class OrderService(
         orderRepository.save(updatedCart)
         
         logger.info("Cart item removed for user $userId")
+        orderEventPublisher.publishItemRemovedFromCart(cart.id!!, userId, itemId)
         return updatedCart.toResponse(orderItemRepository, kafkaRpcClient)
     }
     
@@ -202,6 +207,7 @@ class OrderService(
         orderRepository.save(clearedCart)
         
         logger.info("Cart cleared for user $userId")
+        orderEventPublisher.publishCartCleared(userId)
     }
     
     @Transactional
@@ -237,6 +243,7 @@ class OrderService(
         orderRepository.save(newCart)
         logger.debug("New cart created for user $userId")
         
+        orderEventPublisher.publishOrderCreated(savedOrder.toResponse(orderItemRepository, kafkaRpcClient))
         return savedOrder.toResponse(orderItemRepository, kafkaRpcClient)
     }
     

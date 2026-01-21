@@ -17,12 +17,14 @@ import ru.itmo.productservice.model.entity.Shop
 import ru.itmo.productservice.model.entity.Product
 import ru.itmo.productservice.repository.ProductRepository
 import ru.itmo.productservice.repository.ShopRepository
+import ru.itmo.productservice.kafka.publisher.ProductEventPublisher
 
 @Service
 class ShopService(
     private val shopRepository: ShopRepository,
     private val productRepository: ProductRepository,
-    private val kafkaRpcClient: KafkaRpcClient
+    private val kafkaRpcClient: KafkaRpcClient,
+    private val productEventPublisher: ProductEventPublisher 
 ) {
     
     /**
@@ -97,7 +99,12 @@ class ShopService(
         )
         
         val savedShop = shopRepository.save(shop)
-        return savedShop.toResponse(kafkaRpcClient, productRepository)
+        val response = savedShop.toResponse(kafkaRpcClient, productRepository)
+        
+        productEventPublisher.publishShopCreated(response)
+            .subscribe()
+        
+        return response
     }
     
     /**
@@ -128,7 +135,12 @@ class ShopService(
         )
         
         val savedShop = shopRepository.save(updatedShop)
-        return savedShop.toResponse(kafkaRpcClient, productRepository)
+        val response = savedShop.toResponse(kafkaRpcClient, productRepository)
+        
+        productEventPublisher.publishShopUpdated(shopId, response.name, sellerId)
+            .subscribe()
+        
+        return response
     }
     
     /**

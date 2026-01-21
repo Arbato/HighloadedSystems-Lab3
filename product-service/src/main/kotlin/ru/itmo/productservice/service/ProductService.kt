@@ -17,13 +17,15 @@ import ru.itmo.productservice.model.enums.UserRole
 import ru.itmo.productservice.model.entity.Product
 import ru.itmo.productservice.repository.ProductRepository
 import ru.itmo.productservice.repository.ShopRepository
+import ru.itmo.productservice.kafka.publisher.ProductEventPublisher
 import java.math.BigDecimal
 
 @Service
 class ProductService(
     private val productRepository: ProductRepository,
     private val shopRepository: ShopRepository,
-    private val kafkaRpcClient: KafkaRpcClient
+    private val kafkaRpcClient: KafkaRpcClient,
+    private val productEventPublisher: ProductEventPublisher 
 ) {
     
     /**
@@ -141,7 +143,11 @@ class ProductService(
         )
         
         val savedProduct = productRepository.save(product)
-        return savedProduct.toResponse()
+        val response = savedProduct.toResponse()
+
+        productEventPublisher.publishProductCreated(response)
+        
+        return response
     }
     
     /**
@@ -279,6 +285,7 @@ class ProductService(
         }
         
         productRepository.deleteById(productId)
+        productEventPublisher.publishProductDeleted(productId, userId)
     }
     
     /**
