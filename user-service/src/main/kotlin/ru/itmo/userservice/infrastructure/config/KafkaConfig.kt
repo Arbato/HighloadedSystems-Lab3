@@ -12,7 +12,7 @@ import org.springframework.kafka.core.KafkaAdmin
 @Configuration
 @EnableKafka
 class KafkaConfig(
-    @Value("\${spring.kafka.bootstrap-servers:kafka:9092}")
+    @Value("\${spring.kafka.bootstrap-servers:kafka:9092,kafka-2:9093,kafka-3:9094}")
     private val bootstrapServers: String
 ) {
 
@@ -25,11 +25,11 @@ class KafkaConfig(
 
     @Bean
     fun userServiceRequestsTopic(): NewTopic {
-        return NewTopic("user-service-requests", 1, 1.toShort())
+        return NewTopic("user-service-requests", 3, 3.toShort())
     }
 
     @Bean
     fun productServiceRepliesTopic(): NewTopic {
-        return NewTopic("product-service-replies", 1, 1.toShort())
+        return NewTopic("product-service-replies", 3, 3.toShort())
     }
 }
