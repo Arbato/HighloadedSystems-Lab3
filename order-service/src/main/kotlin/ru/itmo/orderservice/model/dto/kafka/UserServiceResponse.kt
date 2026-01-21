@@ -3,42 +3,19 @@ package ru.itmo.orderservice.model.dto.kafka
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDateTime
 
-data class UserServiceResponse( 
+data class UserServiceResponse<T>(
     @JsonProperty("success")
     val success: Boolean,
+
+    @JsonProperty("request_type")
+    val requestType: String? = null,
     
     @JsonProperty("error_message")
     val errorMessage: String? = null,
     
-    @JsonProperty("user")
-    val user: UserData? = null,
+    @JsonProperty("data")
+    val data: T? = null,
     
     @JsonProperty("timestamp")
     val timestamp: Long = System.currentTimeMillis()
-)
-
-data class UserData(
-    @JsonProperty("id")
-    val id: Long,
-    
-    @JsonProperty("username")
-    val username: String,
-    
-    @JsonProperty("email")
-    val email: String,
-    
-    @JsonProperty("first_name")
-    val firstName: String,
-    
-    @JsonProperty("last_name")
-    val lastName: String,
-    
-    @JsonProperty("roles")
-    val roles: Set<String>,
-    
-    @JsonProperty("created_at")
-    val createdAt: LocalDateTime,
-    
-    @JsonProperty("updated_at")
-    val updatedAt: LocalDateTime
 )

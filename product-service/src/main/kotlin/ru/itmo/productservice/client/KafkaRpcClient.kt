@@ -1,14 +1,16 @@
 package ru.itmo.productservice.client
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.KafkaHeaders
-import org.springframework.messaging.Message
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
-import ru.itmo.productservice.model.dto.kafka.UserServiceRequest
+import ru.itmo.productservice.model.dto.kafka.ProductServiceRequest
 import ru.itmo.productservice.model.dto.kafka.UserServiceResponse
+import ru.itmo.productservice.model.dto.kafka.GetUserPayload
+import ru.itmo.productservice.model.dto.response.UserResponse
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -28,32 +30,27 @@ class KafkaRpcClient(
         private const val REQUEST_TIMEOUT_SECONDS = 10L
     }
     
-    fun getUserById(userId: Long): UserServiceResponse {
+    fun <T> sendRequest(
+        requestTopic: String,
+        replyTopic: String,
+        request: Any,
+        responseType: TypeReference<T>
+    ): T {
         val requestId = UUID.randomUUID().toString()
-        logger.info("Requesting user with ID $userId (requestId: $requestId)")
+        logger.info("Sending RPC request: requestId=$requestId, topic=$requestTopic")
         
-        val request = UserServiceRequest(
-            requestType = "GET_USER_BY_ID",
-            userId = userId
-        )
-        
-        return sendRequest(requestId, request)
-    }
-    
-    private fun sendRequest(requestId: String, request: UserServiceRequest): UserServiceResponse {
         val latch = CountDownLatch(1)
         val pendingRequest = PendingRequest(latch = latch)
         pendingRequests[requestId] = pendingRequest
         
         try {
-
             val requestJson = objectMapper.writeValueAsString(request)
             
-            val message: Message<String> = MessageBuilder
+            val message = MessageBuilder
                 .withPayload(requestJson)
-                .setHeader(KafkaHeaders.TOPIC, "user-service-requests")
+                .setHeader(KafkaHeaders.TOPIC, requestTopic)
                 .setHeader("requestId", requestId)
-                .setHeader("replyTopic", PRODUCT_SERVICE_REPLY_TOPIC)
+                .setHeader("replyTopic", replyTopic)
                 .build()
             
             kafkaTemplate.send(message)
@@ -63,18 +60,15 @@ class KafkaRpcClient(
             
             if (!received) {
                 logger.error("Request timeout after $REQUEST_TIMEOUT_SECONDS seconds (requestId: $requestId)")
-                throw RuntimeException("User service request timeout")
+                throw RuntimeException("RPC request timeout for topic: $requestTopic")
             }
             
-            val response = pendingRequest.response
-                ?: throw RuntimeException("No response received from user service")
+            val responseJson = pendingRequest.response as? String
+                ?: throw RuntimeException("No response received for requestId: $requestId")
             
-            if (!response.success) {
-                logger.warn("User service returned error: ${response.errorMessage}")
-                throw RuntimeException("User service error: ${response.errorMessage}")
-            }
+            val response = objectMapper.readValue(responseJson, responseType)
             
-            logger.info("Received response for requestId: $requestId")
+            logger.info("Received RPC response for requestId: $requestId")
             return response
             
         } finally {
@@ -82,29 +76,51 @@ class KafkaRpcClient(
         }
     }
     
+    fun getUserById(userId: Long): UserResponse {
+        logger.info("Requesting user with ID $userId")
+        
+        val request = ProductServiceRequest(
+            requestType = "GET_USER_BY_ID",
+            payload = GetUserPayload(userId)
+        )
+        
+        val response = sendRequest(
+            requestTopic = USER_SERVICE_REQUEST_TOPIC,
+            replyTopic = PRODUCT_SERVICE_REPLY_TOPIC,
+            request = request,
+            responseType = object : TypeReference<UserServiceResponse<UserResponse>>() {}
+        )
+        
+        if (!response.success || response.data == null) {
+            throw RuntimeException("User not found: $userId")
+        }
+        
+        return response.data
+    }
+    
     fun handleResponse(responseJson: String, requestId: String) {
         try {
             logger.debug("Handling response for requestId: $requestId")
-            val response = objectMapper.readValue(responseJson, UserServiceResponse::class.java)
             
             val pendingRequest = pendingRequests[requestId]
-            if (pendingRequest != null) {
-                pendingRequest.response = response
-                pendingRequest.latch.countDown()
-            } else {
+            if (pendingRequest == null) {
                 logger.warn("Received response for unknown requestId: $requestId")
+                return
             }
+            
+            pendingRequest.response = responseJson
+            pendingRequest.latch.countDown()
+            logger.debug("Response received for requestId: $requestId")
+            
         } catch (e: Exception) {
             logger.error("Error processing response for requestId: $requestId", e)
             val pendingRequest = pendingRequests[requestId]
-            if (pendingRequest != null) {
-                pendingRequest.latch.countDown()
-            }
+            pendingRequest?.latch?.countDown()
         }
     }
     
     private data class PendingRequest(
         val latch: CountDownLatch,
-        var response: UserServiceResponse? = null
+        var response: Any? = null
     )
 }

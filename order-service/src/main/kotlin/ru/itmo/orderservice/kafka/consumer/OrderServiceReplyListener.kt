@@ -15,7 +15,10 @@ class OrderServiceReplyListener(
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)
     
-    @KafkaListener(topics = ["order-service-replies"])
+    @KafkaListener(
+        topics = ["order-service-replies"],
+        groupId = "order-service-group"
+    )
     fun handleOrderServiceReplies(
         @Payload responseJson: String,
         @Header("requestId") requestId: String

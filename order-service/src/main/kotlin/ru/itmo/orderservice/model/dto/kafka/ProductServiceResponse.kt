@@ -4,17 +4,15 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
-data class ProductServiceResponse(
-    
+data class ProductServiceResponse<T>(
     @JsonProperty("success")
     val success: Boolean,
-    
-    @JsonProperty("error_message")
+    @JsonProperty("request_type")
+    val requestType: String? = null,
+    @JsonProperty("errorMessage")
     val errorMessage: String? = null,
-    
-    @JsonProperty("product")
-    val product: ProductData? = null,
-    
+    @JsonProperty("data")
+    val data: T? = null,
     @JsonProperty("timestamp")
     val timestamp: Long = System.currentTimeMillis()
 )
@@ -22,40 +20,43 @@ data class ProductServiceResponse(
 data class ProductData(
     @JsonProperty("id")
     val id: Long,
-    
     @JsonProperty("name")
     val name: String,
-    
     @JsonProperty("description")
     val description: String?,
-    
     @JsonProperty("price")
     val price: BigDecimal,
-    
-    @JsonProperty("image_url")
+    @JsonProperty("imageUrl")
     val imageUrl: String?,
-    
-    @JsonProperty("shop_id")
+    @JsonProperty("shopId")
     val shopId: Long,
-    
-    @JsonProperty("seller_id")
+    @JsonProperty("sellerId")
     val sellerId: Long,
-    
     @JsonProperty("status")
     val status: String,
-    
-    @JsonProperty("rejection_reason")
+    @JsonProperty("rejectionReason")
     val rejectionReason: String?,
-    
-    @JsonProperty("average_rating")
-    val averageRating: Double?,
-    
-    @JsonProperty("comments_count")
-    val commentsCount: Long?,
-    
-    @JsonProperty("created_at")
+    @JsonProperty("averageRating")
+    val averageRating: Double? = null,
+    @JsonProperty("commentsCount")
+    val commentsCount: Long? = null,
+    @JsonProperty("createdAt")
     val createdAt: LocalDateTime,
-    
-    @JsonProperty("updated_at")
+    @JsonProperty("updatedAt")
     val updatedAt: LocalDateTime
+)
+
+// ========== PAGINATED RESPONSE (GENERIC) ==========
+
+data class PaginatedResponse<T>(
+    @JsonProperty("data")
+    val data: List<T>,
+    @JsonProperty("page")
+    val page: Int,
+    @JsonProperty("pageSize")
+    val pageSize: Int,
+    @JsonProperty("totalElements")
+    val totalElements: Long,
+    @JsonProperty("totalPages")
+    val totalPages: Int
 )

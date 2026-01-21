@@ -1,4 +1,4 @@
-package ru.itmo.productservice.model.dto.kafka
+package ru.itmo.userservice.model.dto.kafka
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.LocalDateTime

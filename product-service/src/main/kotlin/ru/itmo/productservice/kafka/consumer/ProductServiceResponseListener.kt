@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 import ru.itmo.productservice.client.KafkaRpcClient
 
 @Component
-class KafkaConsumer(
+class ProductServiceResponseListener(
     private val kafkaRpcClient: KafkaRpcClient
 ) {
     private val logger = LoggerFactory.getLogger(javaClass)

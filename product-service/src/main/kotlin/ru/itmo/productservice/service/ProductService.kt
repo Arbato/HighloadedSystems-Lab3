@@ -162,12 +162,12 @@ class ProductService(
         
         // Проверяем что пользователь - модератор
         val user = try {
-            kafkaRpcClient.getUserById(userId).user
+            kafkaRpcClient.getUserById(userId)
         } catch (e : Exception) {
             throw ResourceNotFoundException("User not found with ID $userId")
         }
 
-        if (!user!!.roles.contains(UserRole.MODERATOR.name)) {
+        if (!user.roles.contains(UserRole.MODERATOR.name)) {
             throw ForbiddenException("Only moderators can update products")
         }
         
@@ -196,12 +196,12 @@ class ProductService(
         
         // Проверяем что пользователь - модератор
         val user = try {
-            kafkaRpcClient.getUserById(moderatorId).user
+            kafkaRpcClient.getUserById(moderatorId)
         } catch (e : Exception) {
             throw ResourceNotFoundException("User not found with ID $moderatorId")
         }
         
-        if (!user!!.roles.contains(UserRole.MODERATOR.name)) {
+        if (!user.roles.contains(UserRole.MODERATOR.name)) {
             throw ForbiddenException("Only moderators can approve products")
         }
         
@@ -233,12 +233,12 @@ class ProductService(
         
         // Проверяем что пользователь - модератор
         val user = try {
-            kafkaRpcClient.getUserById(moderatorId).user
+            kafkaRpcClient.getUserById(moderatorId)
         } catch (e : Exception) {
             throw ResourceNotFoundException("User not found with ID $moderatorId")
         }
 
-        if (!user!!.roles.contains(UserRole.MODERATOR.name)) {
+        if (!user.roles.contains(UserRole.MODERATOR.name)) {
             throw ForbiddenException("Only moderators can reject products")
         }
         
@@ -269,12 +269,12 @@ class ProductService(
         
         // Проверяем что пользователь - модератор или владелец
         val user = try {
-            kafkaRpcClient.getUserById(userId).user
+            kafkaRpcClient.getUserById(userId)
         } catch (e : Exception) {
             throw ResourceNotFoundException("User not found with ID $userId")
         }
 
-        if (product.sellerId != userId && !user!!.roles.contains(UserRole.MODERATOR.name)) {
+        if (product.sellerId != userId && !user.roles.contains(UserRole.MODERATOR.name)) {
             throw ForbiddenException("You can only delete your own products")
         }
         

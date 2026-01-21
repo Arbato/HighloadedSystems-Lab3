@@ -171,7 +171,7 @@ class ShopService(
         productRepository: ProductRepository
     ): ShopResponse {
         val user = try {
-            kafkaRpcClient.getUserById(this.sellerId).user
+            kafkaRpcClient.getUserById(this.sellerId)
         } catch (e: Exception) {
             null
         }

@@ -9,9 +9,9 @@ import org.springframework.messaging.handler.annotation.Header
 import org.springframework.messaging.handler.annotation.Payload
 import org.springframework.messaging.support.MessageBuilder
 import org.springframework.stereotype.Component
-import ru.itmo.userservice.model.dto.kafka.UserServiceRequest
+import ru.itmo.userservice.model.dto.kafka.GetUserPayload
 import ru.itmo.userservice.model.dto.kafka.UserServiceResponse
-import ru.itmo.userservice.model.dto.kafka.UserData
+import ru.itmo.userservice.model.dto.response.UserResponse
 import ru.itmo.userservice.service.UserService
 import reactor.core.scheduler.Schedulers
 
@@ -24,10 +24,10 @@ class UserServiceRequestListener(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @KafkaListener(
-        topics = arrayOf("user-service-requests"),
+        topics = ["user-service-requests"],
         groupId = "user-service-request-processor"
     )
-    fun handleFindUserRequest(
+    fun handleUserRequest(
         @Payload requestJson: String,
         @Header("requestId") requestId: String,
         @Header("replyTopic", required = true) replyTopic: String
@@ -35,15 +35,23 @@ class UserServiceRequestListener(
         try {
             logger.info("Received RPC request: requestId=$requestId, replyTopic=$replyTopic")
             
-            val request = objectMapper.readValue(requestJson, UserServiceRequest::class.java)
+            val requestNode = objectMapper.readTree(requestJson)
+            val requestType = requestNode.get("request_type")?.asText()
             
-            val response = when (request.requestType) {
-                "GET_USER_BY_ID" -> handleGetUserById(request.userId!!)
+            val response: UserServiceResponse<*> = when (requestType) {
+                "GET_USER_BY_ID" -> {
+                    val payload = objectMapper.treeToValue(
+                        requestNode.get("payload"),
+                        GetUserPayload::class.java
+                    )
+                    handleGetUserById(payload.userId)
+                }
+                
                 else -> {
-                    logger.warn("Unknown request type: ${request.requestType}")
-                    UserServiceResponse(
+                    logger.warn("Unknown request type: $requestType")
+                    UserServiceResponse<UserResponse>(
                         success = false,
-                        errorMessage = "Unknown request type: ${request.requestType}"
+                        errorMessage = "Unknown request type: $requestType"
                     )
                 }
             }
@@ -52,7 +60,7 @@ class UserServiceRequestListener(
             
         } catch (e: Exception) {
             logger.error("Error processing request: requestId=$requestId", e)
-            val errorResponse = UserServiceResponse(
+            val errorResponse = UserServiceResponse<UserResponse>(
                 success = false,
                 errorMessage = e.message ?: "Internal error"
             )
@@ -60,7 +68,7 @@ class UserServiceRequestListener(
         }
     }
 
-    private fun handleGetUserById(userId: Long): UserServiceResponse {
+    private fun handleGetUserById(userId: Long): UserServiceResponse<UserResponse> {
         return try {
             val user = userService.getUserById(userId)
                 .subscribeOn(Schedulers.boundedElastic())
@@ -69,15 +77,15 @@ class UserServiceRequestListener(
             if (user != null) {
                 UserServiceResponse(
                     success = true,
-                    user = UserData(
+                    data = UserResponse(
                         id = user.id,
                         username = user.username,
                         email = user.email,
                         firstName = user.firstName,
                         lastName = user.lastName,
                         roles = user.roles.toSet(),
-                        createdAt = user.createdAt, 
-                        updatedAt = user.updatedAt, 
+                        createdAt = user.createdAt,
+                        updatedAt = user.updatedAt
                     )
                 )
             } else {
@@ -87,6 +95,7 @@ class UserServiceRequestListener(
                 )
             }
         } catch (e: Exception) {
+            logger.error("Error getting user with id: $userId", e)
             UserServiceResponse(
                 success = false,
                 errorMessage = e.message ?: "Internal error"
@@ -95,7 +104,7 @@ class UserServiceRequestListener(
     }
 
     private fun sendResponse(
-        response: UserServiceResponse,
+        response: UserServiceResponse<*>,
         requestId: String,
         replyTopic: String
     ) {
@@ -107,7 +116,7 @@ class UserServiceRequestListener(
                 .build()
             
             kafkaTemplate.send(message)
-            logger.info("Sent RPC response: requestId=$requestId, success=${response.success}")
+            logger.info("Sent RPC response: requestId=$requestId, replyTopic=$replyTopic, success=${response.success}")
         } catch (e: Exception) {
             logger.error("Error sending response: requestId=$requestId", e)
         }
