@@ -49,6 +49,14 @@ class ProductServiceRequestListener(
                         )
                         handleGetPendingProductById(payload.productId)
                     }
+
+                    "GET_PRODUCT_BY_ID" -> {
+                        val payload = objectMapper.treeToValue(
+                            requestNode.get("payload"),
+                            GetProductPayload::class.java
+                        )
+                        handleGetProductById(payload.productId)
+                    }
                     
                     "GET_PENDING_PRODUCTS" -> {
                         val payload = objectMapper.treeToValue(
@@ -139,6 +147,37 @@ class ProductServiceRequestListener(
     private fun handleGetPendingProductById(productId: Long): ProductServiceResponse<ProductResponse> {
         return try {
             val product = productService.getPendingProductById(productId)
+            
+            ProductServiceResponse(
+                success = true,
+                data = ProductResponse(
+                    id = product.id,
+                    name = product.name,
+                    description = product.description,
+                    price = product.price,
+                    imageUrl = product.imageUrl,
+                    shopId = product.shopId,
+                    sellerId = product.sellerId,
+                    status = product.status,
+                    rejectionReason = product.rejectionReason,
+                    averageRating = product.averageRating,
+                    commentsCount = product.commentsCount,
+                    createdAt = product.createdAt,
+                    updatedAt = product.updatedAt
+                )
+            )
+        } catch (e: Exception) {
+            logger.error("Error getting product with id: $productId", e)
+            ProductServiceResponse(
+                success = false,
+                errorMessage = e.message ?: "Internal error"
+            )
+        }
+    }
+
+    private fun handleGetProductById(productId: Long): ProductServiceResponse<ProductResponse> {
+        return try {
+            val product = productService.getProductById(productId)
             
             ProductServiceResponse(
                 success = true,
