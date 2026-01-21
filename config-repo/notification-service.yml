@@ -1,0 +1,75 @@
+spring:
+  application:
+    name: notification-service
+  
+  kafka:
+    bootstrap-servers: kafka:9092 
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.info: false
+      acks: all
+      retries: 3
+    
+    consumer:
+      bootstrap-servers: kafka:9092 
+      group-id: notification-service-consumer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.info.headers: false
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 100
+  
+  r2dbc:
+    url: r2dbc:postgresql://${DB_HOST:postgres-notification}:${DB_PORT:5432}/${DB_NAME:itmo_market_notification}
+    username: ${DB_USER:itmo_user}
+    password: ${DB_PASSWORD:itmo_password}
+    pool:
+      initial-size: 10
+      max-size: 20
+      max-idle-time: 30m
+      validation-query: SELECT 1
+  
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+    url: jdbc:postgresql://${DB_HOST:postgres-notification}:${DB_PORT:5432}/${DB_NAME:itmo_market_notification}
+    user: ${DB_USER:itmo_user}
+    password: ${DB_PASSWORD:itmo_password}
+
+server:
+  port: ${SERVER_PORT:8081}
+  servlet:
+    context-path: /
+
+eureka:
+  instance:
+    hostname: notification-service
+    instance-id: notification-service:${server.port}
+    prefer-ip-address: false
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
+  client:
+    serviceUrl:
+      defaultZone: http://${EUREKA_HOST:eureka}:${EUREKA_PORT:8761}/eureka
+    register-with-eureka: true
+    fetch-registry: true
+
+logging:
+  level:
+    ru.itmo.notificationservice: DEBUG
+    org.springframework.r2dbc: DEBUG
+    org.springframework.kafka: DEBUG
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+  api-docs:
+    path: /v1/api-docs

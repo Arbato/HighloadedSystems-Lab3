@@ -10,18 +10,21 @@ import ru.itmo.userservice.exception.ResourceNotFoundException
 import ru.itmo.userservice.model.dto.request.LoginRequest
 import ru.itmo.userservice.model.dto.request.RegisterRequest
 import ru.itmo.userservice.model.dto.response.AuthResponse
+import ru.itmo.userservice.model.dto.response.UserResponse
 import ru.itmo.userservice.model.entity.User
 import ru.itmo.userservice.model.entity.UserRoleEntity
 import ru.itmo.userservice.model.enums.UserRole
 import ru.itmo.userservice.repository.UserRepository
 import ru.itmo.userservice.repository.UserRoleRepository
+import ru.itmo.userservice.kafka.publisher.UserEventPublisher
 import java.time.LocalDateTime
 
 @Service
 class AuthService(
     private val userRepository: UserRepository,
     private val userRoleRepository: UserRoleRepository,
-    private val jwtService: JwtService
+    private val jwtService: JwtService,
+    private val userEventPublisher: UserEventPublisher
 ) {
     private val passwordEncoder = BCryptPasswordEncoder()
 
@@ -85,6 +88,19 @@ class AuthService(
                             username = user.username,
                             roles = roles.toSet()
                         )
+                        val userResponse = UserResponse(
+                            id = user.id,
+                            username = user.username,
+                            email = user.email,
+                            firstName = user.firstName,
+                            lastName = user.lastName,
+                            roles = roles.toSet(),
+                            createdAt = user.createdAt!!,
+                            updatedAt = user.updatedAt!!
+                        )
+                        
+                        userEventPublisher.publishUserRegistered(userResponse)
+                        
                         AuthResponse(
                             token = token,
                             userId = userId,

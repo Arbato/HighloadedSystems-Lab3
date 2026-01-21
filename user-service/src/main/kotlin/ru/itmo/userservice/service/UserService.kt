@@ -13,12 +13,14 @@ import ru.itmo.userservice.model.entity.UserRoleEntity
 import ru.itmo.userservice.model.enums.UserRole
 import ru.itmo.userservice.repository.UserRepository
 import ru.itmo.userservice.repository.UserRoleRepository
+import ru.itmo.userservice.kafka.publisher.UserEventPublisher
 import java.time.LocalDateTime
 
 @Service
 class UserService(
     private val userRepository: UserRepository,
-    private val userRoleRepository: UserRoleRepository
+    private val userRoleRepository: UserRoleRepository,
+    private val userEventPublisher: UserEventPublisher
 ) {
 
     /**
@@ -159,6 +161,12 @@ class UserService(
                     .map { user to it }
             }
             .map { (user, roles) ->
+                userEventPublisher.publishProfileUpdated(
+                    userId = userId,
+                    email = request.email,
+                    firstName = request.firstName,
+                    lastName = request.lastName
+                )
                 UserResponse(
                     id = user.id!!,
                     username = user.username,
@@ -197,10 +205,13 @@ class UserService(
                     } else {
                         userRepository.findById(userId)
                             .switchIfEmpty(Mono.error(ResourceNotFoundException("User not found with ID: $userId")))
-                            .flatMap {
-                                userRoleRepository.deleteByUserId(userId)
-                                    .then(userRepository.deleteById(userId))
-                            }
+                            .flatMap { user ->
+                            userRoleRepository.deleteByUserId(userId)
+                                .then(userRepository.deleteById(userId))
+                                .doOnSuccess {
+                                    userEventPublisher.publishUserDeleted(userId, user.username)
+                                }
+                        }
                     }
                 }
         }
@@ -229,12 +240,15 @@ class UserService(
         
         return userRepository.findById(userId)
             .switchIfEmpty(Mono.error(ResourceNotFoundException("User not found with ID: $userId")))
-            .flatMap {
+            .flatMap { user ->
                 val userRole = UserRoleEntity(
                     userId = userId,
                     role = role.name
                 )
                 userRoleRepository.save(userRole)
+                    .doOnSuccess {
+                        userEventPublisher.publishRoleAssigned(user.id!!, user.username, role.name)
+                    }
                     .then()
             }
     }
