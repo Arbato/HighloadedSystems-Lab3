@@ -6,8 +6,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.BeforeEach
-import ru.itmo.productservice.exception.ResourceNotFoundException
-import ru.itmo.productservice.exception.ServiceUnavailableException
+import ru.itmo.productservice.adapters.exception.ResourceNotFoundException
+import ru.itmo.productservice.adapters.exception.ServiceUnavailableException
+import ru.itmo.productservice.infrastructure.client.FeignClientConfig
+import ru.itmo.productservice.infrastructure.client.UserServiceClientFallback
 import java.nio.charset.StandardCharsets
 
 @DisplayName("UserServiceClient Tests")

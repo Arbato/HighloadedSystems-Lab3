@@ -13,15 +13,17 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import ru.itmo.productservice.exception.BadRequestException
-import ru.itmo.productservice.exception.ForbiddenException
-import ru.itmo.productservice.exception.ResourceNotFoundException
-import ru.itmo.productservice.model.dto.request.CreateShopRequest
-import ru.itmo.productservice.model.dto.request.UpdateShopRequest
-import ru.itmo.productservice.model.dto.response.PaginatedResponse
-import ru.itmo.productservice.model.dto.response.ProductResponse
-import ru.itmo.productservice.model.dto.response.ShopResponse
-import ru.itmo.productservice.service.ShopService
+import ru.itmo.productservice.adapters.exception.BadRequestException
+import ru.itmo.productservice.adapters.exception.ForbiddenException
+import ru.itmo.productservice.adapters.exception.ResourceNotFoundException
+import ru.itmo.productservice.application.dto.request.CreateShopRequest
+import ru.itmo.productservice.application.dto.request.UpdateShopRequest
+import ru.itmo.productservice.application.dto.response.PaginatedResponse
+import ru.itmo.productservice.application.dto.response.ProductResponse
+import ru.itmo.productservice.application.dto.response.ShopResponse
+import ru.itmo.productservice.application.service.ShopService
+import ru.itmo.productservice.presentation.adapter.exception.GlobalExceptionHandler
+import ru.itmo.productservice.presentation.controller.ShopController
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -31,7 +33,7 @@ import java.time.LocalDateTime
     "spring.cloud.config.enabled=false",
     "eureka.client.enabled=false"
 ])
-@org.springframework.context.annotation.Import(ru.itmo.productservice.exception.GlobalExceptionHandler::class)
+@org.springframework.context.annotation.Import(GlobalExceptionHandler::class)
 @DisplayName("ShopController Tests")
 class ShopControllerTest {
 

@@ -13,14 +13,16 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import ru.itmo.productservice.exception.BadRequestException
-import ru.itmo.productservice.exception.ForbiddenException
-import ru.itmo.productservice.exception.ResourceNotFoundException
-import ru.itmo.productservice.model.dto.request.CreateProductRequest
-import ru.itmo.productservice.model.dto.request.UpdateProductRequest
-import ru.itmo.productservice.model.dto.response.PaginatedResponse
-import ru.itmo.productservice.model.dto.response.ProductResponse
-import ru.itmo.productservice.service.ProductService
+import ru.itmo.productservice.adapters.exception.BadRequestException
+import ru.itmo.productservice.adapters.exception.ForbiddenException
+import ru.itmo.productservice.adapters.exception.ResourceNotFoundException
+import ru.itmo.productservice.application.dto.request.CreateProductRequest
+import ru.itmo.productservice.application.dto.request.UpdateProductRequest
+import ru.itmo.productservice.application.dto.response.PaginatedResponse
+import ru.itmo.productservice.application.dto.response.ProductResponse
+import ru.itmo.productservice.application.service.ProductService
+import ru.itmo.productservice.presentation.adapter.exception.GlobalExceptionHandler
+import ru.itmo.productservice.presentation.controller.ProductController
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -30,7 +32,7 @@ import java.time.LocalDateTime
     "spring.cloud.config.enabled=false",
     "eureka.client.enabled=false"
 ])
-@org.springframework.context.annotation.Import(ru.itmo.productservice.exception.GlobalExceptionHandler::class)
+@org.springframework.context.annotation.Import(GlobalExceptionHandler::class)
 @DisplayName("ProductController Tests")
 class ProductControllerTest {
 

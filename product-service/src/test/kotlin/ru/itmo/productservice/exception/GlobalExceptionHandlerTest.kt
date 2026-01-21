@@ -12,6 +12,11 @@ import org.springframework.validation.BindingResult
 import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.context.request.WebRequest
+import ru.itmo.productservice.adapters.exception.BadRequestException
+import ru.itmo.productservice.adapters.exception.ConflictException
+import ru.itmo.productservice.adapters.exception.ForbiddenException
+import ru.itmo.productservice.adapters.exception.ResourceNotFoundException
+import ru.itmo.productservice.presentation.adapter.exception.GlobalExceptionHandler
 
 @DisplayName("GlobalExceptionHandler Tests")
 class GlobalExceptionHandlerTest {
