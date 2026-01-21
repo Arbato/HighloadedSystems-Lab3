@@ -3,7 +3,6 @@ package ru.itmo.productservice.application.service
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import ru.itmo.productservice.infrastructure.client.UserServiceClient
 import ru.itmo.productservice.infrastructure.client.KafkaRpcClient
 import ru.itmo.productservice.adapters.exception.BadRequestException
 import ru.itmo.productservice.adapters.exception.ForbiddenException
@@ -17,7 +16,7 @@ import ru.itmo.productservice.domain.entity.Shop
 import ru.itmo.productservice.domain.entity.Product
 import ru.itmo.productservice.infrastructure.repository.ProductRepository
 import ru.itmo.productservice.infrastructure.repository.ShopRepository
-import ru.itmo.productservice.kafka.publisher.ProductEventPublisher
+import ru.itmo.productservice.adapters.kafka.publisher.ProductEventPublisher
 
 @Service
 class ShopService(

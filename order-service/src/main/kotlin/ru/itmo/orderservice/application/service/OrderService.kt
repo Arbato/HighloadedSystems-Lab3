@@ -16,9 +16,8 @@ import ru.itmo.orderservice.domain.entity.OrderItem
 import ru.itmo.orderservice.domain.enums.OrderStatus
 import ru.itmo.orderservice.infrastructure.repository.OrderRepository
 import ru.itmo.orderservice.infrastructure.repository.OrderItemRepository
-import ru.itmo.orderservice.kafka.publisher.OrderEventPublisher
+import ru.itmo.orderservice.adapters.kafka.publisher.OrderEventPublisher
 import java.math.BigDecimal
-import java.time.LocalDateTime
 
 @Service
 class OrderService(

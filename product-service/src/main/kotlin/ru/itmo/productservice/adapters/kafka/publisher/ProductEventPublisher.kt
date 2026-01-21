@@ -1,16 +1,13 @@
 // src/main/kotlin/ru/itmo/productservice/kafka/publisher/ProductEventPublisher.kt
-package ru.itmo.productservice.kafka.publisher
+package ru.itmo.productservice.adapters.kafka.publisher
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
-import ru.itmo.productservice.model.dto.response.ProductResponse
-import ru.itmo.productservice.model.dto.response.ShopResponse
-import ru.itmo.productservice.model.enums.ProductStatus
-import ru.itmo.productservice.model.enums.UserRole
-import java.math.BigDecimal
+import ru.itmo.productservice.application.dto.response.ProductResponse
+import ru.itmo.productservice.application.dto.response.ShopResponse
 import java.time.LocalDateTime
 
 @Component

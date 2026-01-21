@@ -1,13 +1,13 @@
 // src/main/kotlin/ru/itmo/orderservice/kafka/publisher/OrderEventPublisher.kt
-package ru.itmo.orderservice.kafka.publisher
+package ru.itmo.orderservice.adapters.kafka.publisher
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
-import ru.itmo.orderservice.model.dto.response.OrderResponse
-import ru.itmo.orderservice.model.enums.OrderStatus
+import ru.itmo.orderservice.application.dto.response.OrderResponse
+import ru.itmo.orderservice.domain.enums.OrderStatus
 import java.time.LocalDateTime
 
 @Component
