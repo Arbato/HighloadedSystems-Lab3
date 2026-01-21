@@ -25,6 +25,42 @@ spring:
                     name: X-Service
                     value: user-service
 
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/notification-service/**
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: ^/notification-service(?<remaining>/.*)$
+                    replacement: ${remaining}
+                - name: CircuitBreaker
+                  args:
+                    name: serviceCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: AddRequestHeader
+                  args:
+                    name: X-Service
+                    value: notification-service
+
+            - id: file-service
+              uri: lb://file-service
+              predicates:
+                - Path=/file-service/**
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: ^/file-service(?<remaining>/.*)$
+                    replacement: ${remaining}
+                - name: CircuitBreaker
+                  args:
+                    name: serviceCircuitBreaker
+                    fallbackUri: forward:/fallback
+                - name: AddRequestHeader
+                  args:
+                    name: X-Service
+                    value: file-service
+
             - id: product-service
               uri: lb://product-service
               predicates:
